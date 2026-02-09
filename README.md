@@ -80,7 +80,7 @@ SCAFFOLD automates supply chain structure auditing. Drop customer BOM data into 
 
 Users prepare an Excel workbook with three tabs:
 
-1. **Part Master** — PartNumber, Site (defines nodes)
+1. **Part Master** — PartNumber, Site, IsEndProduct (defines nodes and demand entry points)
 2. **BOM Structure** — Parent, Component, Qty (defines edges); optional SubGroup + UsageShare
 3. **Supplier Map** — Part, Supplier, LeadTime (defines sources; max LT rule for multi-supplier)
 
