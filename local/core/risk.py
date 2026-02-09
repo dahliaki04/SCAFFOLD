@@ -1,4 +1,5 @@
 """L1-09: Max LeadTime / L1-10: Auto-Activity / L1-11: Path Fingerprinting / L1-12: Pattern Grouping.
+L1-13: Single Source Detection / L1-14: Impact Analysis / L1-15: Site Dependency Map.
 
 Risk engine: computes supply chain risk metrics from the BOM graph.
 All traversals are iterative (stack-based) — no recursion.
@@ -125,3 +126,126 @@ def group_by_pattern(
         pattern = extract_pattern(paths)
         groups.setdefault(pattern, []).append(ep)
     return groups
+
+
+# ---------------------------------------------------------------------------
+# L1-13: Single Source Detection
+# ---------------------------------------------------------------------------
+
+def detect_single_source(supplier_map_df: pd.DataFrame) -> set[str]:
+    """Flag parts that have only one supplier (single source risk).
+
+    Returns a set of part names with exactly one supplier.
+    """
+    counts = supplier_map_df.groupby("Part")["Supplier"].nunique()
+    return set(counts[counts == 1].index)
+
+
+# ---------------------------------------------------------------------------
+# L1-14: Impact Analysis
+# ---------------------------------------------------------------------------
+
+def analyze_supplier_impact(
+    supplier_map_df: pd.DataFrame,
+    G: nx.DiGraph,
+    end_products: set[tuple[str, str]],
+) -> dict[str, dict]:
+    """Compute impact of each supplier going offline.
+
+    For each supplier, determines which parts it supplies, and then
+    traces upward through the BOM graph to count how many end products
+    (product lines) would be affected.
+
+    Returns ``{supplier: {"parts": [...], "affected_products": [...], "count": N}}``.
+    """
+    # Build reverse graph for upward tracing (child → parent)
+    R = G.reverse(copy=True)
+
+    # Map supplier → parts
+    supplier_parts: dict[str, set[str]] = {}
+    for _, row in supplier_map_df[["Part", "Supplier"]].drop_duplicates().iterrows():
+        supplier_parts.setdefault(row["Supplier"], set()).add(row["Part"])
+
+    # Map part → all (part, site) nodes in graph
+    part_nodes: dict[str, list[tuple[str, str]]] = {}
+    for part, site in G.nodes():
+        part_nodes.setdefault(part, []).append((part, site))
+
+    ep_set = set(end_products)
+    result: dict[str, dict] = {}
+
+    for supplier, parts in supplier_parts.items():
+        affected_eps: set[tuple[str, str]] = set()
+        for part in parts:
+            for node in part_nodes.get(part, []):
+                # BFS upward through reverse graph to find reachable end products
+                visited: set[tuple[str, str]] = set()
+                queue = [node]
+                while queue:
+                    current = queue.pop(0)
+                    if current in visited:
+                        continue
+                    visited.add(current)
+                    if current in ep_set:
+                        affected_eps.add(current)
+                    for parent in R.successors(current):
+                        if parent not in visited:
+                            queue.append(parent)
+
+        result[supplier] = {
+            "parts": sorted(parts),
+            "affected_products": sorted(affected_eps),
+            "count": len(affected_eps),
+        }
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# L1-15: Site Dependency Map
+# ---------------------------------------------------------------------------
+
+def build_site_dependency_map(
+    G: nx.DiGraph,
+    end_products: set[tuple[str, str]],
+) -> dict[str, dict]:
+    """Map each site to the end products and BOMs that depend on it.
+
+    Answers: "If factory X relocates, which BOMs need to change?"
+
+    Returns ``{site: {"nodes": [...], "affected_products": [...], "count": N}}``.
+    """
+    R = G.reverse(copy=True)
+    ep_set = set(end_products)
+
+    # Group nodes by site
+    site_nodes: dict[str, list[tuple[str, str]]] = {}
+    for part, site in G.nodes():
+        site_nodes.setdefault(site, []).append((part, site))
+
+    result: dict[str, dict] = {}
+
+    for site, nodes in site_nodes.items():
+        affected_eps: set[tuple[str, str]] = set()
+        for node in nodes:
+            # BFS upward to find reachable end products
+            visited: set[tuple[str, str]] = set()
+            queue = [node]
+            while queue:
+                current = queue.pop(0)
+                if current in visited:
+                    continue
+                visited.add(current)
+                if current in ep_set:
+                    affected_eps.add(current)
+                for parent in R.successors(current):
+                    if parent not in visited:
+                        queue.append(parent)
+
+        result[site] = {
+            "nodes": sorted(nodes),
+            "affected_products": sorted(affected_eps),
+            "count": len(affected_eps),
+        }
+
+    return result
