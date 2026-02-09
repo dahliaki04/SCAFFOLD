@@ -408,6 +408,44 @@ def assign_activity(part, site, G):
 | Light | Unlimited | + upload.json | + Rasterized PDF |
 | Heavy | Unlimited | + key.scaf | + Editable PPT + Export Plugin |
 
+### Licensing Architecture
+
+**Offline-first RSA license keys** — zero network calls from the Local Tool.
+
+```
+Payment (LemonSqueezy) → Webhook → Serverless RSA signer → License key emailed
+                                                                    │
+                              Customer pastes key once into Local Tool
+                                                                    │
+                    ┌───────────────────────────────────────────────┤
+                    ▼                                               ▼
+              Local Tool                                     upload.json
+              verifies RSA offline                           carries tier_sig
+              gates which files are generated                     │
+                                                                  ▼
+                                                            SaaS verifies
+                                                            tier_sig client-side
+                                                            gates exports
+```
+
+**License key format** — self-contained RSA-signed string:
+```
+SCAF-<TIER>-<base64(JSON payload)>.<RSA-SHA256 signature>
+Payload: { "tier": "Light|Heavy", "exp": "ISO-8601", "email": "..." }
+```
+
+**Tier proof in upload.json** — Local Tool embeds signed tier in output:
+```json
+{ "meta": { "version": "3.0", "tier": "Heavy", "tier_sig": "<RSA signature>" } }
+```
+
+**Gating flow**:
+- **Local Tool** (L1-31): checks license → Free blocks upload.json generation; Light blocks key.scaf
+- **SaaS** (L2-32): reads `meta.tier_sig` from upload.json → verifies RSA → unlocks exports
+- Free users can't upload (no upload.json generated) → SaaS browse is demo/marketing only
+
+**Infrastructure**: One serverless function (~30 lines) auto-signs keys on purchase webhook. Day-one alternative: manual `sign_license.py` script.
+
 ## Project Structure
 
 ```
