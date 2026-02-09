@@ -133,6 +133,16 @@ Build order: GUI + Export + Tier Gate + PPT
 | L1-38 | Sample Data + README | P1 | Demo dataset for onboarding |
 | L2-30 | Layout Destruction (anti-OCR) | P1 | Micro-offset text positioning |
 
+**PyInstaller build command (L1-33)**:
+```
+pyinstaller --noconfirm --onedir --windowed \
+  --collect-all customtkinter \
+  --hidden-import pywin32 \
+  --hidden-import pythoncom \
+  --hidden-import orjson \
+  main.py
+```
+
 ### Phase 2+ (Deferred — 12 P2)
 
 | ID | Feature | Description |
@@ -159,26 +169,30 @@ Build order: GUI + Export + Tier Gate + PPT
 
 ## Tech Stack (Phase 1 — Locked)
 
-### Local Tool (Python)
+**Runtime: Python 3.12.x** (binding constraint: networkx >=3.6 requires Python >=3.11)
 
-| Component | Library | Constraint |
-|-----------|---------|------------|
-| Excel I/O | `xlwings` | **NOT openpyxl** — xlwings required for Add-in mode + cell formatting |
-| Data processing | `pandas` | Phase 2: Polars if CSV > 500MB |
-| Graph engine | `networkx` | DiGraph only. Phase 2: Rust petgraph + PyO3 if > 1M edges |
-| JSON I/O | `orjson` | **NOT standard json** — Rust-backed, 1M records < 3 sec |
-| GUI | `customtkinter` | Dark mode |
-| Encryption | `cryptography` | AES-256 (key.scaf) + RSA (PPT license) |
-| Hashing | `hashlib` | SHA-256 for node masking |
-| Packaging | `PyInstaller` + `UPX` | `--onedir` portable folder |
+### Local Tool (Python) — see `requirements.txt`
 
-### SaaS Platform (React)
+| Component | Library | Version | Constraint |
+|-----------|---------|---------|------------|
+| Excel I/O | `xlwings` | 0.33.20 | **NOT openpyxl** — xlwings required for Add-in mode + cell formatting |
+| Data processing | `pandas` | 2.3.3 | Stay on 2.x — pandas 3.0 string dtype breaks xlwings |
+| Graph engine | `networkx` | 3.6.1 | DiGraph only. Phase 2: Rust petgraph + PyO3 if > 1M edges |
+| JSON I/O | `orjson` | 3.11.7 | **NOT standard json** — Rust-backed, 1M records < 3 sec |
+| GUI | `customtkinter` | 5.2.2 | Dark mode. NOTE: unmaintained since Jan 2024 |
+| Encryption | `cryptography` | 46.0.4 | Fernet (AES-128-CBC) for key.scaf + RSA for PPT license |
+| Hashing | `hashlib` | stdlib | SHA-256 for node masking |
+| Packaging | `PyInstaller` | 6.18.0 | `--onedir` portable folder |
 
-| Component | Library |
-|-----------|---------|
-| Graph rendering | `sigma.js` + `graphology` (WebGL) |
-| Sankey diagrams | `D3.js` + `d3-sankey` (SVG) |
-| Frontend framework | `React` |
+### SaaS Platform (React) — see `package.json`
+
+| Component | Library | Version |
+|-----------|---------|---------|
+| Graph rendering | `sigma` + `graphology` | 3.0.2 / 0.26.0 |
+| React bindings | `@react-sigma/core` | 5.0.6 |
+| Sankey diagrams | `d3` + `d3-sankey` | 7.9.0 / 0.12.3 |
+| Frontend framework | `react` | 19.2.4 |
+| zlib (browser) | `pako` | 2.1.0 |
 
 ### Renderer Adapter Architecture
 
@@ -187,6 +201,38 @@ SCAFFOLD JSON → Adapter (toSigma / toCosmo / toCyto) → Renderer
 ```
 
 Swap rendering engine by changing ~50-line adapter only. Core JSON format and business logic untouched.
+
+### Tech Stack Risks & Gotchas
+
+| Risk | Impact | Mitigation |
+|------|--------|------------|
+| **xlwings requires Excel COM** | Won't run on Linux / headless CI | Isolate xlwings behind I/O layer; test core logic on Linux, xlwings I/O on Windows CI runner only |
+| **pandas 3.0 breaks xlwings** | String dtype change (`object` → `str`) breaks xlwings converters | Pin pandas 2.3.3; do not upgrade without retesting all xlwings DataFrame ops |
+| **customtkinter unmaintained** | No upstream fixes if it breaks on future Python | Acceptable for Phase 1; plan migration to `ttk` themed widgets or `PySide6` if needed |
+| **Fernet = AES-128-CBC, not AES-256** | Spec says "AES-256" but Fernet splits 32-byte key into 16B signing + 16B encryption | Acceptable security for this use case; document accurately |
+| **D3 v7 is ESM-only** | No CommonJS — must use `import` syntax | Vite handles this natively; no special config needed |
+| **sigma.js v3 breaking change** | v2 custom Programs API incompatible with v3 | Start on v3 from day one; do not reference v2 examples |
+| **PyInstaller bundling** | xlwings needs `--hidden-import pywin32/pythoncom`; customtkinter needs `--collect-all` | See PyInstaller command in S4 notes |
+
+### Fernet Crypto Chain (Python ↔ Browser)
+
+Python Fernet uses: PBKDF2-HMAC-SHA256 → 32-byte key → split into [16B HMAC-SHA256 signing key][16B AES-128-CBC encryption key].
+
+**key.scaf binary format (updated)**:
+```
+MAGIC (b'SCAF', 4 bytes) + VERSION (uint16 LE, 2 bytes) + SALT (16 bytes) + Fernet token (base64url)
+```
+
+**Browser decryption (L2-25)**: Use native Web Crypto API (`crypto.subtle`) — no third-party crypto library needed:
+1. Read SALT from key.scaf bytes 6-22
+2. `crypto.subtle.deriveBits()` with PBKDF2-HMAC-SHA256, same salt + iterations
+3. Parse Fernet token: Version(1B) + Timestamp(8B) + IV(16B) + Ciphertext + HMAC(32B)
+4. `crypto.subtle.verify()` HMAC-SHA256 over everything except last 32 bytes
+5. `crypto.subtle.decrypt()` AES-128-CBC with IV
+6. `pako.inflate()` for zlib decompression
+7. `JSON.parse()` the result
+
+**PBKDF2 iterations**: Use 1,200,000 (current `cryptography` library recommendation, up from 480,000).
 
 ## Critical Engineering Constraints
 
@@ -236,7 +282,9 @@ def apply_jitter(real_val):
 ```python
 MAGIC = b'SCAF'
 VERSION = 3
-# Content: MAGIC + version (uint16 LE) + Fernet(PBKDF2(password)).encrypt(zlib.compress(orjson.dumps(data)))
+# Layout: MAGIC(4B) + version(uint16 LE, 2B) + salt(16B) + Fernet(PBKDF2(password, salt, 1200000)).encrypt(zlib.compress(orjson.dumps(data)))
+# SALT must be stored in the file — browser needs it for PBKDF2 derivation
+# Fernet internally uses AES-128-CBC + HMAC-SHA256 (not AES-256)
 ```
 
 ### Performance Budget
@@ -289,7 +337,7 @@ Users prepare data in this format; the Local Tool validates it.
 | Light | Unlimited | + upload.json | + Rasterized PDF |
 | Heavy | Unlimited | + key.scaf | + Editable PPT + Export Plugin |
 
-## Project Structure (Target)
+## Project Structure
 
 ```
 SCAFFOLD/
@@ -304,8 +352,10 @@ SCAFFOLD/
 │   ├── components/         # Graph, Sankey, Diff, Restore, PPT export
 │   └── public/
 ├── tests/                  # Test suite
-├── requirements.txt        # Python dependencies
-├── package.json            # Node dependencies
+│   ├── local/              # Python unit/integration tests
+│   └── saas/               # JS/React tests
+├── requirements.txt        # Python dependencies (pinned)
+├── package.json            # Node dependencies (pinned)
 ├── CLAUDE.md               # This file
 ├── README.md
 └── LICENSE                 # AGPL-3.0
