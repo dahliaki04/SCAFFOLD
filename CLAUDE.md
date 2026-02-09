@@ -307,7 +307,7 @@ Users prepare data in this format; the Local Tool validates it.
 
 | Tab | Key Fields | Required | Logic |
 |-----|-----------|----------|-------|
-| Part Master | PartNumber, Site | Required | Defines nodes and sites |
+| Part Master | PartNumber, Site, IsEndProduct | Required | Defines nodes, sites, and demand entry points |
 | BOM Structure | AssemblyName, AssemblySite, ComponentName, ComponentSite, Qty | Required | Defines parent-child edges |
 | | SubGroup, UsageShare | Optional | Alternate parts; shares must sum to 1.0 |
 | Supplier Map | Part, Supplier, LeadTime | Required | Max Rule: same part, multiple suppliers → take max LT |
@@ -377,7 +377,8 @@ def assign_activity(part, site, G):
 | 2 | Has only same-part cross-site children | **Transfer** | `{MfgSite} → {DemandSite}` |
 | 3 | Leaf node (no children) | **Buy** | `{SupplierID} → {Site}` |
 
-MPS is **not** used for Make/Buy/Transfer assignment — activity is fully BOM-derived.
+`IsEndProduct` is **not** used for Make/Buy/Transfer assignment — activity is fully BOM-derived.
+`IsEndProduct` (boolean on Part Master) marks demand entry points: used by L1-11 Path Fingerprinting as DFS start nodes, and by L1-31 Free Tier Gate to count end products (≤5 in Free tier).
 
 ## upload.json Format
 
