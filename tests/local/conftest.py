@@ -21,7 +21,10 @@ FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 def part_master_df() -> pd.DataFrame:
     """Part Master tab: PartNumber, Site, IsEndProduct."""
     df = pd.read_csv(FIXTURES / "part_master.csv")
-    df["IsEndProduct"] = df["IsEndProduct"].map({"TRUE": True, "FALSE": False})
+    # pandas may auto-convert TRUE/FALSE strings to booleans
+    df["IsEndProduct"] = df["IsEndProduct"].apply(
+        lambda v: v if isinstance(v, bool) else str(v).upper() == "TRUE"
+    )
     return df
 
 

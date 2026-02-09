@@ -203,8 +203,8 @@ class TestOrjsonIntegration:
         from local.core import output
         source = inspect.getsource(output)
         assert "import orjson" in source or "from orjson" in source
-        # Should not use stdlib json for serialization
-        assert "json.dumps" not in source
+        # Should not import stdlib json for serialization
+        assert "import json" not in source.replace("import orjson", "")
 
     def test_orjson_handles_upload_json_structure(self):
         """orjson can serialize the full upload.json structure."""
