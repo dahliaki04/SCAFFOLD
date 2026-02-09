@@ -123,7 +123,7 @@ Build order: GUI + Export + Tier Gate + PPT
 | L1-28 | Kinaxis V7 Export Plugin | P0 | CSV export in RapidResponse V7 format |
 | L1-29 | Generic CSV Export Plugin | P0 | Universal CSV export |
 | L1-31 | Free Tier Gate | P0 | ≤5 products + ≤2,000 rows check at runtime |
-| L1-32 | customtkinter GUI | P0 | Dark mode desktop GUI |
+| L1-32 | ttkbootstrap GUI | P0 | Dark mode desktop GUI (darkly theme) |
 | L1-33 | PyInstaller Portable Build | P0 | `--onedir` + UPX compression |
 | L2-29 | Rasterized PDF Export | P0 | Image-based PDF, anti-OCR (Light tier) |
 | L2-31 | Editable PPT Export | P0 | Slide deck with editable text/charts (Heavy tier) |
@@ -136,7 +136,7 @@ Build order: GUI + Export + Tier Gate + PPT
 **PyInstaller build command (L1-33)**:
 ```
 pyinstaller --noconfirm --onedir --windowed \
-  --collect-all customtkinter \
+  --collect-all ttkbootstrap \
   --hidden-import pywin32 \
   --hidden-import pythoncom \
   --hidden-import orjson \
@@ -179,7 +179,7 @@ pyinstaller --noconfirm --onedir --windowed \
 | Data processing | `pandas` | 2.3.3 | Stay on 2.x — pandas 3.0 string dtype breaks xlwings |
 | Graph engine | `networkx` | 3.6.1 | DiGraph only. Phase 2: Rust petgraph + PyO3 if > 1M edges |
 | JSON I/O | `orjson` | 3.11.7 | **NOT standard json** — Rust-backed, 1M records < 3 sec |
-| GUI | `customtkinter` | 5.2.2 | Dark mode. NOTE: unmaintained since Jan 2024 |
+| GUI | `ttkbootstrap` | 1.10.1 | Dark mode (darkly/cyborg/solar themes). Replaces unmaintained customtkinter |
 | Encryption | `cryptography` | 46.0.4 | Fernet (AES-128-CBC) for key.scaf + RSA for PPT license |
 | Hashing | `hashlib` | stdlib | SHA-256 for node masking |
 | Packaging | `PyInstaller` | 6.18.0 | `--onedir` portable folder |
@@ -208,11 +208,11 @@ Swap rendering engine by changing ~50-line adapter only. Core JSON format and bu
 |------|--------|------------|
 | **xlwings requires Excel COM** | Won't run on Linux / headless CI | Isolate xlwings behind I/O layer; test core logic on Linux, xlwings I/O on Windows CI runner only |
 | **pandas 3.0 breaks xlwings** | String dtype change (`object` → `str`) breaks xlwings converters | Pin pandas 2.3.3; do not upgrade without retesting all xlwings DataFrame ops |
-| **customtkinter unmaintained** | No upstream fixes if it breaks on future Python | Acceptable for Phase 1; plan migration to `ttk` themed widgets or `PySide6` if needed |
+| **ttkbootstrap themes.json bundling** | PyInstaller may miss `themes.json` resource | Use `--collect-all ttkbootstrap` in PyInstaller command |
 | **Fernet = AES-128-CBC, not AES-256** | Spec says "AES-256" but Fernet splits 32-byte key into 16B signing + 16B encryption | Acceptable security for this use case; document accurately |
 | **D3 v7 is ESM-only** | No CommonJS — must use `import` syntax | Vite handles this natively; no special config needed |
 | **sigma.js v3 breaking change** | v2 custom Programs API incompatible with v3 | Start on v3 from day one; do not reference v2 examples |
-| **PyInstaller bundling** | xlwings needs `--hidden-import pywin32/pythoncom`; customtkinter needs `--collect-all` | See PyInstaller command in S4 notes |
+| **PyInstaller bundling** | xlwings needs `--hidden-import pywin32/pythoncom`; ttkbootstrap needs `--collect-all` | See PyInstaller command in S4 notes |
 
 ### Fernet Crypto Chain (Python ↔ Browser)
 
@@ -345,7 +345,7 @@ SCAFFOLD/
 │   ├── core/               # Validation, risk engine, graph ops
 │   ├── masking/            # Dual-ledger: hasher, jitter, stage masking
 │   ├── export/             # Plugin architecture (Kinaxis V7, CSV, SAP IBP)
-│   ├── gui/                # customtkinter UI
+│   ├── gui/                # ttkbootstrap UI
 │   └── reports/            # validated.xlsx, report.pdf generation
 ├── saas/                   # SaaS Platform (React)
 │   ├── adapters/           # Renderer adapters (toSigma, toCosmo, etc.)

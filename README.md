@@ -71,7 +71,7 @@ SCAFFOLD automates supply chain structure auditing. Drop customer BOM data into 
 
 | Component | Technology |
 |-----------|-----------|
-| Local Tool | Python (xlwings, pandas, networkx, orjson, customtkinter, cryptography) |
+| Local Tool | Python (xlwings, pandas, networkx, orjson, ttkbootstrap, cryptography) |
 | SaaS Platform | React (sigma.js, graphology, D3.js, d3-sankey) |
 | Packaging | PyInstaller + UPX (portable folder) |
 | Encryption | AES-256 (key.scaf), RSA (PPT license) |

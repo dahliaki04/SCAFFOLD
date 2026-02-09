@@ -15,7 +15,7 @@ networkx==3.6.1           # DiGraph, simple_cycles, traversals
 orjson==3.11.7            # NOT stdlib json — 1M records < 3 sec
 
 # GUI
-customtkinter==5.2.2      # Dark mode desktop; NOTE: project unmaintained since Jan 2024
+ttkbootstrap==1.10.1      # Modern ttk themes (dark mode: darkly/cyborg/solar); replaces unmaintained customtkinter
 
 # Encryption
 cryptography==46.0.4      # AES-256 (key.scaf) + RSA (PPT license)
