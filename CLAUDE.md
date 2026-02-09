@@ -58,7 +58,7 @@ Build order: Read → Validate → Risk → Dual Ledger
 | L1-06 | Orphan Detection | P0 | Set operations O(1): parts not in BOM, BOM refs not in parts |
 | L1-08 | Smart Ignore | P0 | Skip `_SCAFFOLD_Error` columns when reading input |
 | L1-09 | Max LeadTime Calculation | P0 | Multi-source → take Max(LT) per part as risk value |
-| L1-10 | Auto-Activity Assignment | P0 | Rule-based BUY/MAKE/TRANSFER from BOM structure |
+| L1-10 | Auto-Activity Assignment | P0 | BOM-derived BUY/MAKE/TRANSFER: Assembly children→Make, same-part cross-site children→Transfer, leaf→Buy |
 | L1-11 | Path Fingerprinting (DFS) | P0 | Per FG: iterative DFS → store site sequence |
 | L1-12 | Pattern String Grouping | P0 | Pattern as dict key → O(1) grouping of FGs |
 | L1-16 | SHA-256 Hasher | P0 | Hash PartName, SiteName, SupplierName |
@@ -245,6 +245,9 @@ These are **non-negotiable** rules. Violating any of these is a bug.
 node = ("WIP-01", "PLANT1")  # ≠ ("WIP-01", "PLANT2")
 
 # Build graph via batch edge list — NEVER iterrows()
+# BOM contains both assembly edges and transfer edges (same table)
+#   Assembly: FG-001@PLANT1 → WIP-01@PLANT1  (different parts)
+#   Transfer: FG-001@DC-01  → FG-001@PLANT1  (same part, different sites)
 G = nx.DiGraph()
 edges = list(zip(
     zip(bom['AssemblyName'], bom['AssemblySite']),
@@ -305,9 +308,76 @@ Users prepare data in this format; the Local Tool validates it.
 | Tab | Key Fields | Required | Logic |
 |-----|-----------|----------|-------|
 | Part Master | PartNumber, Site | Required | Defines nodes and sites |
-| BOM Structure | Parent, Component, Qty | Required | Defines parent-child edges |
+| BOM Structure | AssemblyName, AssemblySite, ComponentName, ComponentSite, Qty | Required | Defines parent-child edges |
 | | SubGroup, UsageShare | Optional | Alternate parts; shares must sum to 1.0 |
 | Supplier Map | Part, Supplier, LeadTime | Required | Max Rule: same part, multiple suppliers → take max LT |
+
+### BOM Edge Types
+
+BOM contains two types of edges, both in the same table:
+
+| Edge Type | Condition | Example | Meaning |
+|-----------|-----------|---------|---------|
+| **Assembly** | Parent.Part ≠ Child.Part | `FG-001@PLANT1 → WIP-01@PLANT1` | Manufacturing relationship |
+| **Transfer** | Parent.Part = Child.Part, Parent.Site ≠ Child.Site | `FG-001@DC-01 → FG-001@PLANT1` | Inter-site supply (demand deepening) |
+
+Transfer edges model inter-site supply directly in the graph — no separate Transfer Map tab needed.
+
+### Auto-Activity Assignment (L1-10)
+
+Activity type is derived entirely from BOM edge structure:
+
+```
+            Part+Site
+                │
+                ▼
+    ┌───────────────────────────┐
+    │ Has children where        │
+    │ child.Part ≠ parent.Part? │   ← Assembly children
+    └─────────────┬─────────────┘
+             YES  │  NO
+             ▼    │
+          ┌──────┐│
+          │ MAKE ││
+          └──────┘│
+                  ▼
+    ┌───────────────────────────┐
+    │ Has children where        │
+    │ child.Part = parent.Part  │   ← Same part, different site
+    │ child.Site ≠ parent.Site? │
+    └─────────────┬─────────────┘
+             YES  │  NO
+             ▼    │
+       ┌──────────┐│
+       │ TRANSFER ││
+       └──────────┘│
+                   ▼
+               ┌───────┐
+               │  BUY  │
+               └───────┘
+```
+
+```python
+# L1-10: Auto-Activity — derived from BOM graph structure
+def assign_activity(part, site, G):
+    children = list(G.successors((part, site)))
+    if not children:
+        return "Buy"          # leaf node, purchased from supplier
+    has_assembly = any(cp != part for cp, cs in children)
+    if has_assembly:
+        return "Make"         # has different-part children = manufacturing
+    return "Transfer"         # only same-part cross-site children = demand point
+```
+
+**Rules summary**:
+
+| # | Condition | Type | SourceID |
+|---|-----------|------|----------|
+| 1 | Has assembly children (different part) | **Make** | `Internal` |
+| 2 | Has only same-part cross-site children | **Transfer** | `{MfgSite} → {DemandSite}` |
+| 3 | Leaf node (no children) | **Buy** | `{SupplierID} → {Site}` |
+
+MPS is **not** used for Make/Buy/Transfer assignment — activity is fully BOM-derived.
 
 ## upload.json Format
 
