@@ -19,7 +19,12 @@ if TYPE_CHECKING:
     import networkx as nx
     import pandas as pd
 
-from local.core.risk import assign_activity, compute_max_leadtime, compute_paths
+from local.core.risk import (
+    assign_activity,
+    compute_max_leadtime,
+    compute_paths,
+    detect_single_source,
+)
 from local.masking.hasher import sha256_hash
 from local.masking.jitter import apply_jitter
 from local.masking.stage import build_stage_map
@@ -61,9 +66,14 @@ def generate_upload_json(
     * LeadTime, Qty → jittered ±15%
     * Topology/depth → preserved plaintext
     """
-    # --- Stage mapping (sites → S1, S2, ...) ---
-    unique_sites = sorted(part_master_df["Site"].unique())
-    stage_map = build_stage_map(unique_sites)
+    # --- Stage mapping (Stage column → S1, S2, ...) ---
+    unique_stages = sorted(part_master_df["Stage"].unique())
+    stage_map = build_stage_map(unique_stages)
+
+    # --- Build (Part, Site) → Stage lookup ---
+    stage_lookup: dict[tuple[str, str], str] = {}
+    for _, row in part_master_df.iterrows():
+        stage_lookup[(row["PartNumber"], row["Site"])] = row["Stage"]
 
     # --- Max lead times ---
     max_lt = compute_max_leadtime(supplier_map_df)
@@ -81,8 +91,9 @@ def generate_upload_json(
         part, site = node
         h = _node_hash(part, site)
         lt_val = max_lt.get(part, 0)
+        real_stage = stage_lookup.get((part, site), "Unknown")
         nodes[h] = {
-            "stage": stage_map.get(site, "S0"),
+            "stage": stage_map.get(real_stage, "S0"),
             "lt": apply_jitter(lt_val) if lt_val > 0 else 0,
             "depth": depths.get(node, 0),
             "site": sha256_hash(site),
@@ -114,6 +125,9 @@ def generate_upload_json(
             path_hashes.append([_node_hash(p, s) for p, s in path])
         paths_out[ep_hash] = path_hashes
 
+    # --- Single source detection (L1-13) ---
+    single_src = detect_single_source(supplier_map_df)
+
     # --- Risk ---
     risk: dict[str, dict] = {}
     for node in G.nodes():
@@ -122,7 +136,7 @@ def generate_upload_json(
         lt_val = max_lt.get(part, 0)
         risk[h] = {
             "max_lt": apply_jitter(lt_val) if lt_val > 0 else 0,
-            "single_source": False,  # L1-13 (Sprint 2) will populate this
+            "single_source": part in single_src,
             "depth": depths.get(node, 0),
         }
 
@@ -135,6 +149,54 @@ def generate_upload_json(
         "edges": edges,
         "paths": paths_out,
         "risk": risk,
+    }
+
+
+def generate_key_data(
+    G: "nx.DiGraph",
+    part_master_df: "pd.DataFrame",
+    supplier_map_df: "pd.DataFrame",
+) -> dict:
+    """Build the key.scaf restore mapping (for L2-26 Live Label Restore).
+
+    Returns a dict containing:
+    * ``nodes``: hash → {part, site, stage} real names
+    * ``stages``: S1 → real stage name
+    * ``values``: hash → {real_lt} real values before jitter
+    """
+    unique_stages = sorted(part_master_df["Stage"].unique())
+    stage_map = build_stage_map(unique_stages)
+    max_lt = compute_max_leadtime(supplier_map_df)
+
+    stage_lookup: dict[tuple[str, str], str] = {}
+    for _, row in part_master_df.iterrows():
+        stage_lookup[(row["PartNumber"], row["Site"])] = row["Stage"]
+
+    nodes_map: dict[str, dict] = {}
+    for node in G.nodes():
+        part, site = node
+        h = sha256_hash(f"{part}:{site}")
+        real_stage = stage_lookup.get((part, site), "Unknown")
+        nodes_map[h] = {
+            "part": part,
+            "site": site,
+            "stage": real_stage,
+        }
+
+    # Reverse stage map: S1 → real stage name
+    reverse_stages = {v: k for k, v in stage_map.items()}
+
+    # Real values (before jitter)
+    values_map: dict[str, dict] = {}
+    for node in G.nodes():
+        part, site = node
+        h = sha256_hash(f"{part}:{site}")
+        values_map[h] = {"real_lt": max_lt.get(part, 0)}
+
+    return {
+        "nodes": nodes_map,
+        "stages": reverse_stages,
+        "values": values_map,
     }
 
 

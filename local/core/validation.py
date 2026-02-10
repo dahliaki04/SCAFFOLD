@@ -14,7 +14,7 @@ import pandas as pd
 # L1-02: Schema Validation
 # ---------------------------------------------------------------------------
 
-_PART_MASTER_REQUIRED = ["PartNumber", "Site", "IsEndProduct"]
+_PART_MASTER_REQUIRED = ["PartNumber", "Site", "Stage", "IsEndProduct"]
 _BOM_REQUIRED = ["AssemblyName", "AssemblySite", "ComponentName", "ComponentSite", "Qty"]
 _SUPPLIER_MAP_REQUIRED = ["Part", "Supplier", "LeadTime"]
 
