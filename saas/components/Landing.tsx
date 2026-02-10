@@ -503,6 +503,38 @@ export function Landing() {
               No account needed. No data leaves your browser.
             </p>
           </div>
+
+          {/* Demo download links */}
+          <div className="demo-banner">
+            <h3>Try the semiconductor demo</h3>
+            <p>
+              Download the sample files below, then upload them to see a
+              real IC manufacturing BOM (Fab, CP, Bumping, Assembly, FT).
+            </p>
+            <div className="demo-steps">
+              <div className="demo-step">
+                <span className="step-number">1</span>
+                <a href="/demo-upload.json" download="upload.json" className="btn btn-sm btn-primary">
+                  Download upload.json
+                </a>
+              </div>
+              <div className="demo-step">
+                <span className="step-number">2</span>
+                <span>Drop it into the viewer below</span>
+              </div>
+              <div className="demo-step">
+                <span className="step-number">3</span>
+                <a href="/demo-key.scaf" download="key.scaf" className="btn btn-sm btn-outline">
+                  Download key.scaf
+                </a>
+              </div>
+              <div className="demo-step">
+                <span className="step-number">4</span>
+                <span>Unmask with password: <code>scaffold-demo</code></span>
+              </div>
+            </div>
+          </div>
+
           <div
             className={`landing-upload ${dragOver ? "drag-over" : ""}`}
             onDragOver={(e) => {

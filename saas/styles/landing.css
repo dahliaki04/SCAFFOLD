@@ -508,6 +508,56 @@
   color: var(--accent);
 }
 
+/* ── Demo Banner ─────────────────────────────────────── */
+
+.demo-banner {
+  max-width: 640px;
+  margin: 0 auto 40px;
+  padding: 28px 32px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.demo-banner h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.demo-banner > p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  line-height: 1.6;
+}
+
+.demo-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.demo-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.demo-step code {
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
 /* ── Upload CTA ──────────────────────────────────────── */
 
 .landing-upload {
