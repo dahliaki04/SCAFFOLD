@@ -4,7 +4,7 @@
  * Right sidebar: list all FG (end product) nodes.
  * Clicking a product enters subgraph view (L2-14).
  * Products are dynamically grouped by L1-12 pattern data when available.
- * Pattern summaries (unique sites, paths, route) are derived from site_sequences.
+ * Path counts and routes are derived from data.paths (full FG-to-leaf paths).
  */
 
 import { useMemo } from "react";
@@ -14,39 +14,35 @@ import { getEndProducts } from "../lib/parser";
 interface ProductInfo {
   id: string;
   label: string;
-  pathCount: number;
+  pathCount: number; // full end-to-end paths from data.paths
 }
 
 interface PatternGroup {
   patternId: string;
   depth: number;
-  pathCount: number;
-  uniqueSites: string[]; // display labels: restored names or hash prefix
-  route: string; // e.g. "WAF → HUB → PLT" or "08d4… → 133a… → 3654…"
+  totalPaths: number; // sum of full paths across all products in group
+  uniqueSites: number; // count of distinct sites in site_sequences
+  longestRoute: string; // representative longest path (node labels)
   products: ProductInfo[];
-}
-
-/**
- * Derive unique ordered sites from site_sequences.
- * Preserves first-seen order (the structural route).
- */
-function deriveUniqueSites(sequences: string[][]): string[] {
-  const seen = new Set<string>();
-  const ordered: string[] = [];
-  for (const seq of sequences) {
-    for (const siteHash of seq) {
-      if (!seen.has(siteHash)) {
-        seen.add(siteHash);
-        ordered.push(siteHash);
-      }
-    }
-  }
-  return ordered;
 }
 
 export function ProductList() {
   const { data, selectedProduct, keyData } = useScaffold();
   const dispatch = useDispatch();
+
+  // Build node hash → display label lookup
+  const nodeLabel = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!data?.nodes) return map;
+    for (const nodeId of Object.keys(data.nodes)) {
+      const restored = keyData?.nodes?.[nodeId];
+      map.set(
+        nodeId,
+        restored ? `${restored.part}@${restored.site}` : nodeId.slice(0, 8)
+      );
+    }
+    return map;
+  }, [data, keyData]);
 
   // Build product info lookup
   const productMap = useMemo(() => {
@@ -57,21 +53,10 @@ export function ProductList() {
       const label = restored
         ? `${restored.part}@${restored.site}`
         : id.slice(0, 12) + "...";
-      const pathCount = data.paths[id]?.length ?? 0;
+      // Count full end-to-end paths from data.paths
+      const paths = data.paths[id];
+      const pathCount = Array.isArray(paths) ? paths.length : 0;
       map.set(id, { id, label, pathCount });
-    }
-    return map;
-  }, [data, keyData]);
-
-  // Build site hash → real name lookup (for key restore)
-  const siteHashToName = useMemo(() => {
-    const map = new Map<string, string>();
-    if (!data?.nodes || !keyData?.nodes) return map;
-    for (const [nodeId, nodeData] of Object.entries(data.nodes)) {
-      const restored = keyData.nodes[nodeId];
-      if (restored && !map.has(nodeData.site)) {
-        map.set(nodeData.site, restored.site);
-      }
     }
     return map;
   }, [data, keyData]);
@@ -97,20 +82,40 @@ export function ProductList() {
       }
       if (products.length === 0) continue;
 
-      // Derive structural info from site_sequences
-      const siteHashes = deriveUniqueSites(pattern.site_sequences);
-      const uniqueSites = siteHashes.map((hash) =>
-        siteHashToName.get(hash) ?? hash.slice(0, 6) + "…"
-      );
+      // Total full paths across all products in this group
+      let totalPaths = 0;
+      for (const p of products) {
+        totalPaths += p.pathCount;
+      }
 
-      const route = uniqueSites.join(" → ");
+      // Count unique sites from site_sequences
+      const allSites = new Set<string>();
+      for (const seq of pattern.site_sequences) {
+        for (const site of seq) allSites.add(site);
+      }
+
+      // Build representative route: longest full path from data.paths
+      // Pick the first product and find its longest path
+      let longestPath: string[] = [];
+      for (const prodId of pattern.products) {
+        const paths = data.paths[prodId];
+        if (!Array.isArray(paths)) continue;
+        for (const path of paths) {
+          if (Array.isArray(path) && path.length > longestPath.length) {
+            longestPath = path;
+          }
+        }
+      }
+      const longestRoute = longestPath
+        .map((hash) => nodeLabel.get(hash) ?? hash.slice(0, 8))
+        .join(" → ");
 
       groups.push({
         patternId,
         depth: pattern.depth,
-        pathCount: pattern.site_sequences.length,
-        uniqueSites,
-        route,
+        totalPaths,
+        uniqueSites: allSites.size,
+        longestRoute,
         products,
       });
     }
@@ -124,7 +129,7 @@ export function ProductList() {
     }
 
     return { groups, ungrouped };
-  }, [data, productMap, siteHashToName]);
+  }, [data, productMap, nodeLabel]);
 
   const hasPatterns = groups.length > 0;
   const totalProducts = productMap.size;
@@ -166,12 +171,14 @@ export function ProductList() {
                 <div className="pattern-group-header">
                   <span className="pattern-group-id">{group.patternId}</span>
                   <span className="badge">
-                    {group.uniqueSites.length} sites · {group.pathCount} paths · depth {group.depth}
+                    {group.totalPaths} paths · {group.uniqueSites} sites · depth {group.depth}
                   </span>
                 </div>
-                <div className="pattern-route" title={group.route}>
-                  {group.route}
-                </div>
+                {group.longestRoute && (
+                  <div className="pattern-route" title={group.longestRoute}>
+                    {group.longestRoute}
+                  </div>
+                )}
                 {group.products.map(renderProduct)}
               </div>
             ))}
