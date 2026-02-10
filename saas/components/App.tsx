@@ -13,24 +13,14 @@ import { SiteFilter } from "./SiteFilter";
 import { DepthFilter } from "./DepthFilter";
 import { ProductList } from "./ProductList";
 import { KeyRestore } from "./KeyRestore";
-import { UploadZone } from "./UploadZone";
+import { Landing } from "./Landing";
 
 function AppContent() {
   const { loaded, data, viewMode, restored } = useScaffold();
   const dispatch = useDispatch();
 
   if (!loaded) {
-    return (
-      <div className="app-container">
-        <header className="app-header">
-          <span className="logo">SCAFFOLD</span>
-          <span className="version">v3.0</span>
-        </header>
-        <div className="app-body">
-          <UploadZone />
-        </div>
-      </div>
-    );
+    return <Landing />;
   }
 
   const nodeCount = data ? Object.keys(data.nodes).length : 0;
