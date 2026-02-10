@@ -127,6 +127,7 @@ export function Landing() {
   const dispatch = useDispatch();
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
+  const [demoLoading, setDemoLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
@@ -159,6 +160,21 @@ export function Landing() {
     [handleFile]
   );
 
+  const loadDemo = useCallback(async () => {
+    setDemoLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/demo-upload.json");
+      if (!res.ok) throw new Error("Failed to fetch demo data");
+      const text = await res.text();
+      const data = parseScaffoldJSON(text);
+      dispatch({ type: "LOAD_DATA", payload: data });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load demo");
+      setDemoLoading(false);
+    }
+  }, [dispatch]);
+
   const scrollToUpload = () => {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -170,9 +186,13 @@ export function Landing() {
         <div className="landing-nav-inner">
           <span className="landing-logo">SCAFFOLD</span>
           <div className="landing-nav-links">
+            <a href="#demo">Demo</a>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
+            <button className="btn btn-accent btn-sm" onClick={loadDemo} disabled={demoLoading}>
+              {demoLoading ? "Loading..." : "Try Demo"}
+            </button>
             <button className="btn btn-primary btn-sm" onClick={scrollToUpload}>
               Open Viewer
             </button>
@@ -195,14 +215,14 @@ export function Landing() {
             customer's data.
           </p>
           <div className="landing-hero-actions">
-            <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
-              Try Free Viewer
+            <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
+              {demoLoading ? "Loading Demo..." : "Try Semiconductor Demo"}
               <ArrowRightIcon />
             </button>
-            <a href="#how-it-works" className="btn btn-ghost btn-lg">
-              See How It Works
-              <ArrowDownIcon />
-            </a>
+            <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
+              Upload Your Data
+              <ArrowRightIcon />
+            </button>
           </div>
           <div className="landing-hero-stats">
             <div className="hero-stat">
@@ -251,6 +271,49 @@ export function Landing() {
               <text x="280" y="124" textAnchor="middle" fill="#fff" fontSize="7">WIP</text>
             </svg>
             <div className="hero-graph-label">Interactive BOM Graph</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Demo Section ────────────────────────────────── */}
+      <section className="landing-section section-alt" id="demo">
+        <div className="landing-section-inner">
+          <div className="demo-showcase">
+            <div className="demo-showcase-content">
+              <div className="demo-showcase-badge">Live Demo</div>
+              <h2>See SCAFFOLD in action</h2>
+              <p>
+                Explore a real semiconductor BOM with 24 parts across 8 global sites,
+                covering Fabrication, Circuit Probe, Bumping, Assembly, Final Test, and Distribution.
+              </p>
+              <div className="demo-showcase-actions">
+                <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
+                  {demoLoading ? "Loading..." : "Load Demo Instantly"}
+                  <ArrowRightIcon />
+                </button>
+              </div>
+              <div className="demo-showcase-info">
+                <span>3 IC products</span>
+                <span className="demo-dot" />
+                <span>6 process stages</span>
+                <span className="demo-dot" />
+                <span>8 fabs & sites</span>
+              </div>
+            </div>
+            <div className="demo-showcase-details">
+              <div className="demo-detail-card">
+                <h4>Included in the demo</h4>
+                <ul>
+                  <li>IC-7NM-SOC — 9-level deep supply chain</li>
+                  <li>IC-28NM-MCU — 7-level manufacturing flow</li>
+                  <li>MOD-5G-RF — 4-level RF module assembly</li>
+                </ul>
+              </div>
+              <div className="demo-detail-card">
+                <h4>Try the unmask flow</h4>
+                <p>After loading the demo, download <a href="/demo-key.scaf" download="key.scaf">key.scaf</a> and drop it into the Key Restore panel. Password: <code>scaffold-demo</code></p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -504,35 +567,12 @@ export function Landing() {
             </p>
           </div>
 
-          {/* Demo download links */}
-          <div className="demo-banner">
-            <h3>Try the semiconductor demo</h3>
-            <p>
-              Download the sample files below, then upload them to see a
-              real IC manufacturing BOM (Fab, CP, Bumping, Assembly, FT).
-            </p>
-            <div className="demo-steps">
-              <div className="demo-step">
-                <span className="step-number">1</span>
-                <a href="/demo-upload.json" download="upload.json" className="btn btn-sm btn-primary">
-                  Download upload.json
-                </a>
-              </div>
-              <div className="demo-step">
-                <span className="step-number">2</span>
-                <span>Drop it into the viewer below</span>
-              </div>
-              <div className="demo-step">
-                <span className="step-number">3</span>
-                <a href="/demo-key.scaf" download="key.scaf" className="btn btn-sm btn-outline">
-                  Download key.scaf
-                </a>
-              </div>
-              <div className="demo-step">
-                <span className="step-number">4</span>
-                <span>Unmask with password: <code>scaffold-demo</code></span>
-              </div>
-            </div>
+          {/* Quick demo link */}
+          <div className="demo-quick">
+            <span>No data yet?</span>
+            <button className="btn btn-sm btn-accent" onClick={loadDemo} disabled={demoLoading}>
+              {demoLoading ? "Loading..." : "Load Semiconductor Demo"}
+            </button>
           </div>
 
           <div
