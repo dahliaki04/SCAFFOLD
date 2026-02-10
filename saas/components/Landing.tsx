@@ -420,7 +420,7 @@ export function Landing() {
               </div>
               <h3>Offline-first Local Tool</h3>
               <p>
-                Validate Excel BOMs, generate analysis reports, and produce
+                Validate Excel BOMs, generate PDF and PPT reports, and produce
                 standalone deliverables — no internet required.
               </p>
             </div>
@@ -531,7 +531,7 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
                 <li><span className="check"><CheckIcon /></span> Up to 2,000 BOM rows</li>
                 <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF analysis report</li>
+                <li><span className="check"><CheckIcon /></span> PDF report</li>
                 <li><span className="cross"><CrossIcon /></span> upload.json generation</li>
                 <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
                 <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
@@ -554,7 +554,7 @@ export function Landing() {
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
                 <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF analysis report</li>
+                <li><span className="check"><CheckIcon /></span> PDF report</li>
                 <li><span className="check"><CheckIcon /></span> upload.json generation</li>
                 <li><span className="check"><CheckIcon /></span> SaaS masked browse</li>
                 <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
