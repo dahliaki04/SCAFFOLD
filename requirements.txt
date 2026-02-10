@@ -1,0 +1,28 @@
+# SCAFFOLD Local Tool — Python 3.12.x
+# Pinned for mutual compatibility, verified February 2026
+#
+# Binding constraint: networkx >=3.6 requires Python >=3.11
+# Recommended: Python 3.12.x (best balance of support + performance)
+
+# Core I/O
+xlwings==0.33.20          # Excel read/write + Add-in mode; NOT openpyxl
+pandas==2.3.3             # Stay on 2.x — pandas 3.0 string dtype breaks xlwings
+
+# Graph engine
+networkx==3.6.1           # DiGraph, simple_cycles, traversals
+
+# JSON (Rust-backed)
+orjson==3.11.7            # NOT stdlib json — 1M records < 3 sec
+
+# GUI
+ttkbootstrap==1.10.1      # Modern ttk themes (dark mode: darkly/cyborg/solar); replaces unmaintained customtkinter
+
+# Encryption
+cryptography==46.0.4      # AES-256 (key.scaf) + RSA (PPT license)
+                          # NOTE: Fernet actually uses AES-128-CBC — see CLAUDE.md
+
+# Hashing: hashlib is stdlib, no pin needed
+
+# Packaging (install separately, not in production venv)
+# pyinstaller==6.18.0
+# pyinstaller-hooks-contrib>=2025.1
