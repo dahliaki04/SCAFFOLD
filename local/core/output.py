@@ -24,6 +24,8 @@ from local.core.risk import (
     compute_max_leadtime,
     compute_paths,
     detect_single_source,
+    extract_pattern,
+    group_by_pattern,
 )
 from local.masking.hasher import sha256_hash
 from local.masking.jitter import apply_jitter
@@ -140,6 +142,23 @@ def generate_upload_json(
             "depth": depths.get(node, 0),
         }
 
+    # --- L1-12: Pattern grouping ---
+    pattern_groups = group_by_pattern(end_products, G)
+    patterns_out: dict[str, dict] = {}
+    for idx, (pattern, products) in enumerate(
+        sorted(pattern_groups.items(), key=lambda kv: len(kv[0]), reverse=True), 1
+    ):
+        pid = f"P{idx}"
+        # Masked stage sequence: map real site names in each path to masked stages
+        masked_site_seqs: list[list[str]] = []
+        for site_seq in pattern:
+            masked_site_seqs.append([sha256_hash(s) for s in site_seq])
+        patterns_out[pid] = {
+            "site_sequences": masked_site_seqs,
+            "products": [_node_hash(*ep) for ep in products],
+            "depth": max(len(seq) for seq in pattern),
+        }
+
     return {
         "meta": {
             "version": "3.0",
@@ -148,6 +167,7 @@ def generate_upload_json(
         "nodes": nodes,
         "edges": edges,
         "paths": paths_out,
+        "patterns": patterns_out,
         "risk": risk,
     }
 
