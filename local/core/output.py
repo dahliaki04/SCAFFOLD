@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
 from local.core.risk import (
+    analyze_supplier_impact,
     assign_activity,
     compute_max_leadtime,
     compute_paths,
@@ -159,6 +160,29 @@ def generate_upload_json(
             "depth": max(len(seq) for seq in pattern),
         }
 
+    # --- Supplier impact (L1-14) ---
+    # Trace: Supplier → supplied (part, site) nodes → BFS backward → end products
+    impact = analyze_supplier_impact(supplier_map_df, G, end_products)
+    suppliers_out: dict[str, dict] = {}
+    for supplier_name, info in impact.items():
+        sup_hash = sha256_hash(supplier_name)
+        # supplied_nodes: exact (part, site) node hashes where this supplier's parts sit
+        supplied: list[str] = []
+        for part in info["parts"]:
+            for node in G.nodes():
+                p, s = node
+                if p == part:
+                    supplied.append(_node_hash(p, s))
+        # affected_products: end product node hashes reachable via backward trace
+        affected: list[str] = [
+            _node_hash(p, s) for p, s in info["affected_products"]
+        ]
+        suppliers_out[sup_hash] = {
+            "supplied_nodes": sorted(set(supplied)),
+            "affected_products": sorted(set(affected)),
+            "impact_count": info["count"],
+        }
+
     return {
         "meta": {
             "version": "3.0",
@@ -169,6 +193,7 @@ def generate_upload_json(
         "paths": paths_out,
         "patterns": patterns_out,
         "risk": risk,
+        "suppliers": suppliers_out,
     }
 
 
@@ -213,10 +238,16 @@ def generate_key_data(
         h = sha256_hash(f"{part}:{site}")
         values_map[h] = {"real_lt": max_lt.get(part, 0)}
 
+    # Supplier name restore mapping: hash → real supplier name
+    suppliers_restore: dict[str, str] = {}
+    for supplier_name in supplier_map_df["Supplier"].unique():
+        suppliers_restore[sha256_hash(supplier_name)] = supplier_name
+
     return {
         "nodes": nodes_map,
         "stages": reverse_stages,
         "values": values_map,
+        "suppliers": suppliers_restore,
     }
 
 

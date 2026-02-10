@@ -33,6 +33,16 @@ export interface ScaffoldPattern {
   depth: number; // max path length
 }
 
+/** Supplier impact data in upload.json (L1-14). */
+export interface ScaffoldSupplier {
+  /** Hashed (part:site) node IDs this supplier feeds into. */
+  supplied_nodes: string[];
+  /** End product node hashes reachable via backward trace. */
+  affected_products: string[];
+  /** Count of affected end products. */
+  impact_count: number;
+}
+
 /** Meta section of upload.json. */
 export interface ScaffoldMeta {
   version: string;
@@ -49,12 +59,14 @@ export interface ScaffoldJSON {
   paths: Record<string, string[]>;
   patterns: Record<string, ScaffoldPattern>;
   risk: Record<string, ScaffoldRisk>;
+  suppliers?: Record<string, ScaffoldSupplier>;
 }
 
 /** Decrypted key.scaf mapping data. */
 export interface KeyScafData {
   nodes: Record<string, { part: string; site: string; stage: string }>;
   stages: Record<string, string>; // S1 → real stage name
+  suppliers?: Record<string, string>; // supplier hash → real supplier name
   [key: string]: unknown;
 }
 
@@ -78,6 +90,8 @@ export interface AppState {
   restored: boolean;
   /** Currently selected end product hash for subgraph/sankey */
   selectedProduct: string | null;
+  /** Currently selected supplier hash for impact view */
+  selectedSupplier: string | null;
   /** Active stage filters (checked stages shown) */
   stageFilters: Set<string>;
   /** Active site filters */
