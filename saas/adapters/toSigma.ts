@@ -30,6 +30,8 @@ export interface ToSigmaOptions {
   depthFilter?: number | null;
   /** Subgraph: only show nodes reachable from this end product. */
   subgraphRoot?: string | null;
+  /** Multiple roots for pattern-consolidated view. */
+  representativeRoots?: string[] | null;
   /** Key restore data for real labels. */
   keyData?: KeyScafData | null;
 }
@@ -49,6 +51,7 @@ export function toSigmaGraph(
     siteFilter = null,
     depthFilter = null,
     subgraphRoot = null,
+    representativeRoots = null,
     keyData = null,
   } = options;
 
@@ -60,17 +63,18 @@ export function toSigmaGraph(
     if (r.max_lt > globalMaxLt) globalMaxLt = r.max_lt;
   }
 
-  // If subgraph mode, compute reachable nodes from the selected product
+  // If subgraph mode, compute reachable nodes from the selected product(s)
   let reachableNodes: Set<string> | null = null;
   if (subgraphRoot && data.paths[subgraphRoot]) {
-    reachableNodes = new Set<string>();
-    // Include all nodes on any path from this end product
-    for (const pathNodes of Object.values(data.paths)) {
-      // paths value is an array of node hashes per path
-      // For subgraph, we only want paths from the selected product
-    }
-    // Walk edges from subgraphRoot via BFS
     reachableNodes = computeReachable(subgraphRoot, data);
+  } else if (representativeRoots && representativeRoots.length > 0) {
+    // Pattern-consolidated view: union of reachable nodes from all representatives
+    reachableNodes = new Set<string>();
+    for (const root of representativeRoots) {
+      for (const nodeId of computeReachable(root, data)) {
+        reachableNodes.add(nodeId);
+      }
+    }
   }
 
   // Add nodes
@@ -99,6 +103,16 @@ export function toSigmaGraph(
     if (keyData?.nodes?.[nodeId]) {
       const restored = keyData.nodes[nodeId];
       label = `${restored.part}@${restored.site}`;
+    }
+
+    // Add pattern info label for representative root nodes
+    if (representativeRoots?.includes(nodeId) && data.patterns) {
+      for (const [patId, pat] of Object.entries(data.patterns)) {
+        if (pat.products.includes(nodeId)) {
+          label = `${label} | ${patId} (${pat.products.length} products)`;
+          break;
+        }
+      }
     }
 
     graph.addNode(nodeId, {

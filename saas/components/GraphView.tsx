@@ -7,6 +7,11 @@
  * L2-09: Hover Highlight Neighbors.
  *
  * Main graph visualization component using Sigma.js + graphology.
+ *
+ * Layout: spine-based — main path as straight horizontal line,
+ * branch nodes (components added at a site) placed below.
+ * Pattern-consolidated overview groups products by pattern.
+ * Branches are foldable via toggle switch.
  */
 
 import { useEffect, useRef, useMemo, useCallback, useState } from "react";
@@ -14,6 +19,16 @@ import Graph from "graphology";
 import Sigma from "sigma";
 import { useScaffold } from "../context/ScaffoldContext";
 import { toSigmaGraph, DEFAULT_VISIBLE_DEPTH } from "../adapters/toSigma";
+
+/**
+ * Extract paths as string[][] from data.paths[productId],
+ * handling both string[] (spec) and string[][] (actual demo) formats.
+ */
+function getProductPaths(rawPaths: unknown): string[][] {
+  if (!Array.isArray(rawPaths) || rawPaths.length === 0) return [];
+  if (Array.isArray(rawPaths[0])) return rawPaths as string[][];
+  return [rawPaths as string[]];
+}
 
 export function GraphView() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -30,6 +45,34 @@ export function GraphView() {
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [branchesFolded, setBranchesFolded] = useState(false);
+
+  // Compute representative products for pattern-consolidated view.
+  // When no product is selected and patterns exist, pick one product per pattern.
+  const representativeRoots = useMemo(() => {
+    if (selectedProduct || !data?.patterns || !data?.paths) return null;
+    const patterns = Object.values(data.patterns);
+    if (patterns.length === 0) return null;
+
+    const reps: string[] = [];
+    const coveredProducts = new Set<string>();
+
+    for (const pat of patterns) {
+      if (pat.products.length > 0) {
+        reps.push(pat.products[0]);
+        for (const p of pat.products) coveredProducts.add(p);
+      }
+    }
+
+    // Include products not covered by any pattern
+    for (const productId of Object.keys(data.paths)) {
+      if (!coveredProducts.has(productId)) {
+        reps.push(productId);
+      }
+    }
+
+    return reps.length > 0 ? reps : null;
+  }, [selectedProduct, data]);
 
   // Build graph with current filters
   const graph = useMemo(() => {
@@ -48,46 +91,177 @@ export function GraphView() {
       siteFilter: siteFilters,
       depthFilter: depthFilter === Infinity ? null : depthFilter,
       subgraphRoot: selectedProduct,
+      representativeRoots,
       keyData,
     });
-  }, [data, stageFilters, siteFilters, depthFilter, selectedProduct, keyData]);
+  }, [
+    data,
+    stageFilters,
+    siteFilters,
+    depthFilter,
+    selectedProduct,
+    representativeRoots,
+    keyData,
+  ]);
 
-  // Apply force-directed layout
+  // Spine-based layout: main path as straight line, branches below.
+  // Marks each node with isSpine attribute for fold toggle.
+  // In pattern mode (no product selected), each pattern gets its own row.
   useEffect(() => {
-    if (graph.order === 0) return;
+    if (graph.order === 0 || !data) return;
 
-    // Simple force-directed layout using circular initial positions
-    const nodes = graph.nodes();
-    const n = nodes.length;
-
-    // Arrange by depth layers for better visualization
-    const depthGroups = new Map<number, string[]>();
-    nodes.forEach((nodeId) => {
-      const depth = graph.getNodeAttribute(nodeId, "depth") ?? 0;
-      if (!depthGroups.has(depth)) depthGroups.set(depth, []);
-      depthGroups.get(depth)!.push(nodeId);
-    });
-
-    const sortedDepths = Array.from(depthGroups.keys()).sort((a, b) => a - b);
     const layerWidth = 200;
+    const positioned = new Set<string>();
 
-    sortedDepths.forEach((depth, layerIdx) => {
-      const nodesInLayer = depthGroups.get(depth)!;
-      const layerHeight = nodesInLayer.length * 60;
-      nodesInLayer.forEach((nodeId, i) => {
-        graph.setNodeAttribute(
-          nodeId,
-          "x",
-          layerIdx * layerWidth + (Math.random() - 0.5) * 40
-        );
-        graph.setNodeAttribute(
-          nodeId,
-          "y",
-          (i - nodesInLayer.length / 2) * 60 + (Math.random() - 0.5) * 20
-        );
+    // Build spine (longest path) per product from paths data
+    const productSpines = new Map<string, string[]>();
+    const productAllNodes = new Map<string, Set<string>>();
+
+    for (const [productId, rawPaths] of Object.entries(data.paths)) {
+      const paths = getProductPaths(rawPaths);
+      let longestPath: string[] = [];
+      const nodeSet = new Set<string>();
+
+      for (const path of paths) {
+        if (Array.isArray(path)) {
+          for (const nodeId of path) {
+            if (graph.hasNode(nodeId)) nodeSet.add(nodeId);
+          }
+          if (path.length > longestPath.length) longestPath = path;
+        }
+      }
+
+      productSpines.set(
+        productId,
+        longestPath.filter((n) => graph.hasNode(n))
+      );
+      productAllNodes.set(productId, nodeSet);
+    }
+
+    /**
+     * Layout a single product's subgraph: spine on straight line at rowY,
+     * branch nodes below. Marks nodes with isSpine attribute.
+     */
+    function layoutProductSubgraph(
+      productId: string,
+      rowY: number
+    ): number {
+      const spine = productSpines.get(productId) ?? [];
+      const allNodes = productAllNodes.get(productId) ?? new Set<string>();
+
+      // Build depth→spine x mapping for branch alignment
+      const depthToSpineX = new Map<number, number>();
+
+      // Position spine nodes on a straight horizontal line
+      spine.forEach((nodeId, idx) => {
+        if (positioned.has(nodeId)) return;
+        const x = idx * layerWidth;
+        graph.setNodeAttribute(nodeId, "x", x);
+        graph.setNodeAttribute(nodeId, "y", rowY);
+        graph.setNodeAttribute(nodeId, "isSpine", true);
+        positioned.add(nodeId);
+
+        const d = graph.getNodeAttribute(nodeId, "depth") ?? 0;
+        if (!depthToSpineX.has(d)) depthToSpineX.set(d, x);
       });
-    });
-  }, [graph]);
+
+      // Collect branch nodes (not on spine) grouped by depth
+      const branchByDepth = new Map<number, string[]>();
+      for (const nodeId of allNodes) {
+        if (positioned.has(nodeId)) continue;
+        const depth = graph.getNodeAttribute(nodeId, "depth") ?? 0;
+        if (!branchByDepth.has(depth)) branchByDepth.set(depth, []);
+        branchByDepth.get(depth)!.push(nodeId);
+      }
+
+      // Position branch nodes below the spine
+      let maxBranchRows = 0;
+      const sortedBranchDepths = Array.from(branchByDepth.keys()).sort(
+        (a, b) => a - b
+      );
+      for (const depth of sortedBranchDepths) {
+        const nodes = branchByDepth.get(depth)!;
+        // Align x with spine node at same depth, or fall back to depth * layerWidth
+        const x = depthToSpineX.get(depth) ?? depth * layerWidth;
+
+        nodes.forEach((nodeId, i) => {
+          graph.setNodeAttribute(nodeId, "x", x);
+          graph.setNodeAttribute(nodeId, "y", rowY + 80 + i * 60);
+          graph.setNodeAttribute(nodeId, "isSpine", false);
+          positioned.add(nodeId);
+        });
+        maxBranchRows = Math.max(maxBranchRows, nodes.length);
+      }
+
+      // Return total height used by this row (spine + branches + gap)
+      return 80 + maxBranchRows * 60 + 100;
+    }
+
+    const patterns = data.patterns ?? {};
+    const patternIds = Object.keys(patterns).sort();
+
+    if (patternIds.length > 0 && !selectedProduct) {
+      // === Pattern-consolidated layout ===
+      // Each pattern in its own row, spine as straight line, branches below
+      let currentRowY = 0;
+
+      for (const patId of patternIds) {
+        const pat = patterns[patId];
+        const rep = pat.products[0];
+        if (!rep || !productSpines.has(rep)) continue;
+
+        const rowHeight = layoutProductSubgraph(rep, currentRowY);
+        currentRowY += rowHeight;
+      }
+
+      // Layout orphan products (not in any pattern)
+      const coveredProducts = new Set<string>();
+      for (const pat of Object.values(patterns)) {
+        for (const p of pat.products) coveredProducts.add(p);
+      }
+      for (const productId of Object.keys(data.paths)) {
+        if (coveredProducts.has(productId)) continue;
+        if (!productSpines.has(productId)) continue;
+        const rowHeight = layoutProductSubgraph(productId, currentRowY);
+        currentRowY += rowHeight;
+      }
+    } else if (selectedProduct) {
+      // === Single product selected — one spine ===
+      layoutProductSubgraph(selectedProduct, 0);
+    } else {
+      // === Fallback: no patterns, no product selected ===
+      // Use longest spine across all products
+      let bestProduct = "";
+      let bestLen = 0;
+      for (const [pid, spine] of productSpines) {
+        if (spine.length > bestLen) {
+          bestLen = spine.length;
+          bestProduct = pid;
+        }
+      }
+      if (bestProduct) {
+        layoutProductSubgraph(bestProduct, 0);
+      }
+    }
+
+    // Position any remaining unpositioned nodes (safety net)
+    const remaining = graph.nodes().filter((n) => !positioned.has(n));
+    if (remaining.length > 0) {
+      const startX =
+        Math.max(
+          ...graph
+            .nodes()
+            .filter((n) => positioned.has(n))
+            .map((n) => graph.getNodeAttribute(n, "x") as number),
+          0
+        ) + layerWidth;
+      remaining.forEach((nodeId, i) => {
+        graph.setNodeAttribute(nodeId, "x", startX);
+        graph.setNodeAttribute(nodeId, "y", i * 60);
+        graph.setNodeAttribute(nodeId, "isSpine", false);
+      });
+    }
+  }, [graph, data, selectedProduct]);
 
   // Initialize and update Sigma
   useEffect(() => {
@@ -176,42 +350,74 @@ export function GraphView() {
     [graph]
   );
 
-  // L2-09: Highlight effect — hover shows immediate neighbors, click shows full chain
+  // Combined reducer: fold branches + highlight (hover/click)
   useEffect(() => {
     const sigma = sigmaRef.current;
     if (!sigma) return;
 
-    // Click selection takes priority over hover
     const activeNode = selectedNode ?? hoveredNode;
+    const needsReducer = branchesFolded || activeNode;
 
-    if (activeNode) {
-      const highlighted = selectedNode
-        ? getFullChain(activeNode)
-        : (() => {
-            const neighbors = new Set<string>();
-            neighbors.add(activeNode);
-            graph.forEachNeighbor(activeNode, (neighbor) => {
-              neighbors.add(neighbor);
-            });
-            return neighbors;
-          })();
+    if (needsReducer) {
+      // Pre-compute highlighted set if a node is active
+      let highlighted: Set<string> | null = null;
+      if (activeNode) {
+        highlighted = selectedNode
+          ? getFullChain(activeNode)
+          : (() => {
+              const neighbors = new Set<string>();
+              neighbors.add(activeNode);
+              graph.forEachNeighbor(activeNode, (neighbor) => {
+                neighbors.add(neighbor);
+              });
+              return neighbors;
+            })();
+      }
 
-      sigma.setSetting("nodeReducer", (node, data) => {
-        if (node === activeNode) {
-          return { ...data, zIndex: 2, highlighted: true };
+      sigma.setSetting("nodeReducer", (node, attrs) => {
+        const isSpine = graph.getNodeAttribute(node, "isSpine");
+
+        // Fold: hide branch nodes
+        if (branchesFolded && isSpine === false) {
+          return { ...attrs, hidden: true };
         }
-        if (highlighted.has(node)) {
-          return { ...data, zIndex: 1 };
+
+        // Highlight
+        if (highlighted) {
+          if (node === activeNode) {
+            return { ...attrs, zIndex: 2, highlighted: true };
+          }
+          if (highlighted.has(node)) {
+            return { ...attrs, zIndex: 1 };
+          }
+          return { ...attrs, color: "#2a2d35", label: "", zIndex: 0 };
         }
-        return { ...data, color: "#2a2d35", label: "", zIndex: 0 };
+
+        return attrs;
       });
-      sigma.setSetting("edgeReducer", (edge, data) => {
+
+      sigma.setSetting("edgeReducer", (edge, attrs) => {
         const source = graph.source(edge);
         const target = graph.target(edge);
-        if (highlighted.has(source) && highlighted.has(target)) {
-          return { ...data, color: "#888", size: 2 };
+
+        // Fold: hide edges connected to branch nodes
+        if (branchesFolded) {
+          const sourceIsSpine = graph.getNodeAttribute(source, "isSpine");
+          const targetIsSpine = graph.getNodeAttribute(target, "isSpine");
+          if (sourceIsSpine === false || targetIsSpine === false) {
+            return { ...attrs, hidden: true };
+          }
         }
-        return { ...data, color: "#1a1d22", size: 0.5 };
+
+        // Highlight
+        if (highlighted) {
+          if (highlighted.has(source) && highlighted.has(target)) {
+            return { ...attrs, color: "#888", size: 2 };
+          }
+          return { ...attrs, color: "#1a1d22", size: 0.5 };
+        }
+
+        return attrs;
       });
     } else {
       sigma.setSetting("nodeReducer", null);
@@ -219,7 +425,7 @@ export function GraphView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, selectedNode, graph, getFullChain]);
+  }, [hoveredNode, selectedNode, branchesFolded, graph, getFullChain]);
 
   // Highlight searched node
   useEffect(() => {
@@ -243,5 +449,57 @@ export function GraphView() {
     }
   }, [searchQuery, graph]);
 
-  return <div ref={containerRef} className="graph-container" />;
+  return (
+    <div style={{ position: "relative", width: "100%", height: "100%" }}>
+      <div
+        style={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          background: "var(--bg-secondary, #1a1d27)",
+          border: "1px solid var(--border, #333640)",
+          borderRadius: 6,
+          padding: "6px 12px",
+          fontSize: 13,
+          color: "var(--text-secondary, #9ca3af)",
+          userSelect: "none",
+        }}
+      >
+        <span>Fold branches</span>
+        <button
+          onClick={() => setBranchesFolded((prev) => !prev)}
+          style={{
+            width: 36,
+            height: 20,
+            borderRadius: 10,
+            border: "none",
+            cursor: "pointer",
+            position: "relative",
+            background: branchesFolded
+              ? "var(--accent, #4285f4)"
+              : "var(--bg-tertiary, #252830)",
+            transition: "background 0.2s",
+          }}
+        >
+          <span
+            style={{
+              position: "absolute",
+              top: 2,
+              left: branchesFolded ? 18 : 2,
+              width: 16,
+              height: 16,
+              borderRadius: "50%",
+              background: "#fff",
+              transition: "left 0.2s",
+            }}
+          />
+        </button>
+      </div>
+      <div ref={containerRef} className="graph-container" />
+    </div>
+  );
 }
