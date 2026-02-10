@@ -525,7 +525,7 @@ export function Landing() {
                 $0<span>/forever</span>
               </div>
               <div className="pricing-desc">
-                Get a feel for your BOM structure.
+                Validate, sort, and fix your BOM in place.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
