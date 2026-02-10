@@ -203,7 +203,7 @@ export function Landing() {
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <div className="landing-hero-badge">Supply Chain Structure Audit</div>
+          <div className="landing-hero-badge">Your BOM Analysis Buddy</div>
           <h1>
             See the risk your
             <br />
