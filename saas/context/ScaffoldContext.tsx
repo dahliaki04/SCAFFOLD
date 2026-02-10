@@ -29,6 +29,7 @@ interface State {
   viewMode: "graph" | "sankey";
   stages: string[];
   sites: string[];
+  nodeSizing: boolean;
 }
 
 type Action =
@@ -42,6 +43,7 @@ type Action =
   | { type: "SET_DEPTH"; payload: number }
   | { type: "SET_SEARCH"; payload: string }
   | { type: "SET_VIEW"; payload: "graph" | "sankey" }
+  | { type: "TOGGLE_NODE_SIZING" }
   | { type: "RESET" };
 
 const initialState: State = {
@@ -58,6 +60,7 @@ const initialState: State = {
   viewMode: "graph",
   stages: [],
   sites: [],
+  nodeSizing: true,
 };
 
 function reducer(state: State, action: Action): State {
@@ -117,6 +120,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, searchQuery: action.payload };
     case "SET_VIEW":
       return { ...state, viewMode: action.payload };
+    case "TOGGLE_NODE_SIZING":
+      return { ...state, nodeSizing: !state.nodeSizing };
     case "RESET":
       return initialState;
     default:

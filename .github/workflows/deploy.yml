@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - name: Python Tests
-            cmd: pip install -r requirements.txt && python -m pytest tests/local/ -q
+            cmd: pip install -r requirements-ci.txt && python -m pytest tests/local/ -q
           - name: JS Tests
             cmd: npm ci && npm test
     steps:
