@@ -29,6 +29,8 @@ interface State {
   viewMode: "graph" | "sankey";
   stages: string[];
   sites: string[];
+  /** L2-06: When true, node size reflects Max LT risk. When false, uniform size. */
+  sizeByRisk: boolean;
 }
 
 type Action =
@@ -42,6 +44,7 @@ type Action =
   | { type: "SET_DEPTH"; payload: number }
   | { type: "SET_SEARCH"; payload: string }
   | { type: "SET_VIEW"; payload: "graph" | "sankey" }
+  | { type: "TOGGLE_SIZE_BY_RISK" }
   | { type: "RESET" };
 
 const initialState: State = {
@@ -58,6 +61,7 @@ const initialState: State = {
   viewMode: "graph",
   stages: [],
   sites: [],
+  sizeByRisk: true,
 };
 
 function reducer(state: State, action: Action): State {
@@ -117,6 +121,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, searchQuery: action.payload };
     case "SET_VIEW":
       return { ...state, viewMode: action.payload };
+    case "TOGGLE_SIZE_BY_RISK":
+      return { ...state, sizeByRisk: !state.sizeByRisk };
     case "RESET":
       return initialState;
     default:

@@ -7,7 +7,7 @@
  * Path counts and routes are derived from data.paths (full FG-to-leaf paths).
  */
 
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { getEndProducts } from "../lib/parser";
 
@@ -131,6 +131,17 @@ export function ProductList() {
     return { groups, ungrouped };
   }, [data, productMap, nodeLabel]);
 
+  // Collapsible pattern groups — track which are collapsed
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleCollapse = useCallback((patternId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(patternId)) next.delete(patternId);
+      else next.add(patternId);
+      return next;
+    });
+  }, []);
+
   const hasPatterns = groups.length > 0;
   const totalProducts = productMap.size;
 
@@ -166,30 +177,52 @@ export function ProductList() {
 
         {hasPatterns ? (
           <>
-            {groups.map((group) => (
-              <div key={group.patternId} className="pattern-group">
-                <div className="pattern-group-header">
-                  <span className="pattern-group-id">{group.patternId}</span>
-                  <span className="badge">
-                    {group.totalPaths} paths · {group.uniqueSites} sites · depth {group.depth}
-                  </span>
-                </div>
-                {group.longestRoute && (
-                  <div className="pattern-route" title={group.longestRoute}>
-                    {group.longestRoute}
+            {groups.map((group) => {
+              const isCollapsed = collapsed.has(group.patternId);
+              return (
+                <div key={group.patternId} className="pattern-group">
+                  <div
+                    className="pattern-group-header"
+                    onClick={() => toggleCollapse(group.patternId)}
+                  >
+                    <span className="pattern-group-id">
+                      <span className="fold-arrow">{isCollapsed ? "\u25b6" : "\u25bc"}</span>
+                      {group.patternId}
+                    </span>
+                    <span className="badge">
+                      {group.totalPaths} paths · {group.uniqueSites} sites · depth {group.depth}
+                    </span>
                   </div>
-                )}
-                {group.products.map(renderProduct)}
-              </div>
-            ))}
-            {ungrouped.length > 0 && (
-              <div className="pattern-group">
-                <div className="pattern-group-header">
-                  <span className="pattern-group-id">Ungrouped</span>
+                  {!isCollapsed && (
+                    <>
+                      {group.longestRoute && (
+                        <div className="pattern-route" title={group.longestRoute}>
+                          {group.longestRoute}
+                        </div>
+                      )}
+                      {group.products.map(renderProduct)}
+                    </>
+                  )}
                 </div>
-                {ungrouped.map(renderProduct)}
-              </div>
-            )}
+              );
+            })}
+            {ungrouped.length > 0 && (() => {
+              const isCollapsed = collapsed.has("__ungrouped");
+              return (
+                <div className="pattern-group">
+                  <div
+                    className="pattern-group-header"
+                    onClick={() => toggleCollapse("__ungrouped")}
+                  >
+                    <span className="pattern-group-id">
+                      <span className="fold-arrow">{isCollapsed ? "\u25b6" : "\u25bc"}</span>
+                      Ungrouped
+                    </span>
+                  </div>
+                  {!isCollapsed && ungrouped.map(renderProduct)}
+                </div>
+              );
+            })()}
           </>
         ) : (
           Array.from(productMap.values()).map(renderProduct)

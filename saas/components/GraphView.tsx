@@ -12,7 +12,7 @@
 import { useEffect, useRef, useMemo, useCallback, useState } from "react";
 import Graph from "graphology";
 import Sigma from "sigma";
-import { useScaffold } from "../context/ScaffoldContext";
+import { useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { toSigmaGraph, DEFAULT_VISIBLE_DEPTH } from "../adapters/toSigma";
 
 export function GraphView() {
@@ -26,7 +26,9 @@ export function GraphView() {
     selectedProduct,
     searchQuery,
     keyData,
+    sizeByRisk,
   } = useScaffold();
+  const dispatch = useDispatch();
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -62,8 +64,9 @@ export function GraphView() {
       depthFilter: depthFilter === Infinity ? null : depthFilter,
       subgraphRoot: selectedProduct,
       keyData,
+      sizeByRisk,
     });
-  }, [data, stageFilters, siteFilters, depthFilter, selectedProduct, keyData]);
+  }, [data, stageFilters, siteFilters, depthFilter, selectedProduct, keyData, sizeByRisk]);
 
   // Apply force-directed layout
   useEffect(() => {
@@ -263,5 +266,18 @@ export function GraphView() {
     }
   }, [searchQuery, graph]);
 
-  return <div ref={containerRef} className="graph-container" />;
+  return (
+    <div className="graph-wrapper">
+      <div ref={containerRef} className="graph-container" />
+      <div className="graph-toolbar">
+        <button
+          className={`toolbar-btn ${sizeByRisk ? "active" : ""}`}
+          onClick={() => dispatch({ type: "TOGGLE_SIZE_BY_RISK" })}
+          title={sizeByRisk ? "Switch to uniform node size" : "Size nodes by risk (Max LT)"}
+        >
+          {sizeByRisk ? "Size: Risk" : "Size: Uniform"}
+        </button>
+      </div>
+    </div>
+  );
 }
