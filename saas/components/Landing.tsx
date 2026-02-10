@@ -211,8 +211,9 @@ export function Landing() {
           </h1>
           <p className="landing-hero-sub">
             SCAFFOLD validates BOM structures, computes supply chain risk
-            metrics, and visualizes product flows — all without exposing your
-            customer's data.
+            metrics, and visualizes product flows. The local tool works
+            fully offline. This online viewer runs entirely in your
+            browser — your data never leaves your machine.
           </p>
           <div className="landing-hero-actions">
             <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
@@ -226,18 +227,18 @@ export function Landing() {
           </div>
           <div className="landing-hero-stats">
             <div className="hero-stat">
-              <span className="hero-stat-value">250K+</span>
-              <span className="hero-stat-label">rows processed</span>
-            </div>
-            <div className="hero-stat-divider" />
-            <div className="hero-stat">
-              <span className="hero-stat-value">&lt;15s</span>
-              <span className="hero-stat-label">full pipeline</span>
+              <span className="hero-stat-value">100%</span>
+              <span className="hero-stat-label">free offline tool</span>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat">
               <span className="hero-stat-value">0</span>
-              <span className="hero-stat-label">data uploaded</span>
+              <span className="hero-stat-label">data sent to server</span>
+            </div>
+            <div className="hero-stat-divider" />
+            <div className="hero-stat">
+              <span className="hero-stat-value">Browser only</span>
+              <span className="hero-stat-label">all processing local</span>
             </div>
           </div>
         </div>
@@ -271,6 +272,33 @@ export function Landing() {
               <text x="280" y="124" textAnchor="middle" fill="#fff" fontSize="7">WIP</text>
             </svg>
             <div className="hero-graph-label">Interactive BOM Graph</div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Trust Banner ─────────────────────────────────── */}
+      <section className="landing-trust-banner">
+        <div className="landing-trust-inner">
+          <div className="trust-item">
+            <ShieldIcon />
+            <div>
+              <strong>Free offline local tool</strong>
+              <span>Validate BOMs, generate reports, and audit supply chains with zero internet required. Your data never touches a network.</span>
+            </div>
+          </div>
+          <div className="trust-item">
+            <LockIcon />
+            <div>
+              <strong>Browser-only online viewer</strong>
+              <span>This web viewer processes everything in your browser's memory. No data is uploaded to any server — verify in DevTools Network tab.</span>
+            </div>
+          </div>
+          <div className="trust-item">
+            <LayersIcon />
+            <div>
+              <strong>Safe for sensitive data</strong>
+              <span>Names are SHA-256 hashed, values are jittered, stages are masked. Even the masked file reveals zero business terms.</span>
+            </div>
           </div>
         </div>
       </section>
@@ -563,7 +591,8 @@ export function Landing() {
             <h2>Ready to explore?</h2>
             <p>
               Drop your upload.json below to launch the interactive viewer.
-              No account needed. No data leaves your browser.
+              No account needed. No server upload. Everything runs in your
+              browser's memory and is gone when you close the tab.
             </p>
           </div>
 
