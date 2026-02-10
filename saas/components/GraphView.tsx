@@ -29,6 +29,7 @@ export function GraphView() {
   } = useScaffold();
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   // Build graph with current filters
   const graph = useMemo(() => {
@@ -121,6 +122,14 @@ export function GraphView() {
       setHoveredNode(null);
     });
 
+    // Click node: select and highlight full upstream/downstream chain
+    sigma.on("clickNode", ({ node }) => {
+      setSelectedNode((prev) => (prev === node ? null : node));
+    });
+    sigma.on("clickStage", () => {
+      setSelectedNode(null);
+    });
+
     // L2-08: Semantic Zoom — show more details on zoom in
     // Sigma handles this natively via labelRenderedSizeThreshold
 
@@ -132,20 +141,66 @@ export function GraphView() {
     };
   }, [graph]);
 
-  // L2-09: Hover highlight effect — dim non-neighbor nodes
+  // Compute full upstream + downstream chain via iterative BFS
+  const getFullChain = useCallback(
+    (startNode: string): Set<string> => {
+      const related = new Set<string>();
+      related.add(startNode);
+
+      // BFS upstream (predecessors via in-neighbors)
+      const upQueue = [startNode];
+      while (upQueue.length > 0) {
+        const current = upQueue.shift()!;
+        graph.forEachInNeighbor(current, (neighbor) => {
+          if (!related.has(neighbor)) {
+            related.add(neighbor);
+            upQueue.push(neighbor);
+          }
+        });
+      }
+
+      // BFS downstream (successors via out-neighbors)
+      const downQueue = [startNode];
+      while (downQueue.length > 0) {
+        const current = downQueue.shift()!;
+        graph.forEachOutNeighbor(current, (neighbor) => {
+          if (!related.has(neighbor)) {
+            related.add(neighbor);
+            downQueue.push(neighbor);
+          }
+        });
+      }
+
+      return related;
+    },
+    [graph]
+  );
+
+  // L2-09: Highlight effect — hover shows immediate neighbors, click shows full chain
   useEffect(() => {
     const sigma = sigmaRef.current;
     if (!sigma) return;
 
-    if (hoveredNode) {
-      const neighbors = new Set<string>();
-      neighbors.add(hoveredNode);
-      graph.forEachNeighbor(hoveredNode, (neighbor) => {
-        neighbors.add(neighbor);
-      });
+    // Click selection takes priority over hover
+    const activeNode = selectedNode ?? hoveredNode;
+
+    if (activeNode) {
+      const highlighted = selectedNode
+        ? getFullChain(activeNode)
+        : (() => {
+            const neighbors = new Set<string>();
+            neighbors.add(activeNode);
+            graph.forEachNeighbor(activeNode, (neighbor) => {
+              neighbors.add(neighbor);
+            });
+            return neighbors;
+          })();
 
       sigma.setSetting("nodeReducer", (node, data) => {
-        if (neighbors.has(node)) {
+        if (node === activeNode) {
+          return { ...data, zIndex: 2, highlighted: true };
+        }
+        if (highlighted.has(node)) {
           return { ...data, zIndex: 1 };
         }
         return { ...data, color: "#2a2d35", label: "", zIndex: 0 };
@@ -153,7 +208,7 @@ export function GraphView() {
       sigma.setSetting("edgeReducer", (edge, data) => {
         const source = graph.source(edge);
         const target = graph.target(edge);
-        if (neighbors.has(source) && neighbors.has(target)) {
+        if (highlighted.has(source) && highlighted.has(target)) {
           return { ...data, color: "#888", size: 2 };
         }
         return { ...data, color: "#1a1d22", size: 0.5 };
@@ -164,7 +219,7 @@ export function GraphView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, graph]);
+  }, [hoveredNode, selectedNode, graph, getFullChain]);
 
   // Highlight searched node
   useEffect(() => {
