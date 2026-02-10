@@ -31,6 +31,19 @@ export function GraphView() {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
+  // L1-12: Build product-to-pattern lookup for pattern-aware highlighting
+  const patternPeers = useMemo(() => {
+    if (!data?.patterns) return new Map<string, Set<string>>();
+    const map = new Map<string, Set<string>>();
+    for (const pattern of Object.values(data.patterns)) {
+      const peerSet = new Set(pattern.products);
+      for (const prodId of pattern.products) {
+        map.set(prodId, peerSet);
+      }
+    }
+    return map;
+  }, [data]);
+
   // Build graph with current filters
   const graph = useMemo(() => {
     if (!data) return new Graph({ type: "directed" });
@@ -196,12 +209,19 @@ export function GraphView() {
             return neighbors;
           })();
 
+      // L1-12: Pattern peers — other end products sharing the same structural pattern
+      const peers = selectedNode ? (patternPeers.get(activeNode) ?? new Set()) : new Set();
+
       sigma.setSetting("nodeReducer", (node, data) => {
         if (node === activeNode) {
           return { ...data, zIndex: 2, highlighted: true };
         }
         if (highlighted.has(node)) {
           return { ...data, zIndex: 1 };
+        }
+        // Pattern peers get a distinct accent to show structural similarity
+        if (peers.has(node) && graph.hasNode(node)) {
+          return { ...data, zIndex: 1, color: "#F59E0B", borderColor: "#F59E0B" };
         }
         return { ...data, color: "#2a2d35", label: "", zIndex: 0 };
       });
@@ -219,7 +239,7 @@ export function GraphView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, selectedNode, graph, getFullChain]);
+  }, [hoveredNode, selectedNode, graph, getFullChain, patternPeers]);
 
   // Highlight searched node
   useEffect(() => {
