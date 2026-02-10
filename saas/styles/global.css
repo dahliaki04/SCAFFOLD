@@ -278,6 +278,20 @@ body {
   flex-shrink: 0;
 }
 
+/* Toggle item */
+.toggle-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toggle-item input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
 /* Depth slider */
 .depth-slider {
   display: flex;

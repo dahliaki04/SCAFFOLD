@@ -87,6 +87,34 @@ describe("L2-06: Node Size by Risk", () => {
   });
 });
 
+describe("L2-06: Node Size Toggle", () => {
+  it("uniform size when nodeSizing disabled", () => {
+    const graph = toSigmaGraph(MINIMAL_JSON, { nodeSizing: false });
+    const sizes = new Set<number>();
+    graph.forEachNode((_id, attrs) => {
+      sizes.add(attrs.size);
+    });
+    expect(sizes.size).toBe(1); // all nodes same size
+  });
+
+  it("varied sizes when nodeSizing enabled", () => {
+    const graph = toSigmaGraph(MINIMAL_JSON, { nodeSizing: true });
+    const sizeA = graph.getNodeAttribute("aaa111", "size") as number;
+    const sizeB = graph.getNodeAttribute("bbb222", "size") as number;
+    // bbb222 has lower max_lt (20) than aaa111 (30), so smaller
+    expect(sizeA).not.toBe(sizeB);
+  });
+
+  it("defaults to risk-based sizing", () => {
+    const graph = toSigmaGraph(MINIMAL_JSON);
+    const sizes = new Set<number>();
+    graph.forEachNode((_id, attrs) => {
+      sizes.add(attrs.size);
+    });
+    expect(sizes.size).toBeGreaterThan(1);
+  });
+});
+
 describe("L2-07: Lazy Loading", () => {
   it("DEFAULT_VISIBLE_DEPTH is 3", () => {
     expect(DEFAULT_VISIBLE_DEPTH).toBe(3);

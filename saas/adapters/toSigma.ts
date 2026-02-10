@@ -16,6 +16,9 @@ import { getStageColor } from "../types";
 const MIN_NODE_SIZE = 4;
 const MAX_NODE_SIZE = 24;
 
+/** Uniform node size when risk-based sizing is disabled. */
+const UNIFORM_NODE_SIZE = 8;
+
 /** Default visible depth for lazy loading (L2-07). */
 export const DEFAULT_VISIBLE_DEPTH = 3;
 
@@ -32,6 +35,8 @@ export interface ToSigmaOptions {
   subgraphRoot?: string | null;
   /** Key restore data for real labels. */
   keyData?: KeyScafData | null;
+  /** Enable risk-based node sizing (L2-06). When false, all nodes use uniform size. */
+  nodeSizing?: boolean;
 }
 
 /**
@@ -50,6 +55,7 @@ export function toSigmaGraph(
     depthFilter = null,
     subgraphRoot = null,
     keyData = null,
+    nodeSizing = true,
   } = options;
 
   const graph = new Graph({ type: "directed", multi: false });
@@ -87,12 +93,16 @@ export function toSigmaGraph(
       keyData?.stages?.[nodeData.stage] ? nodeData.stage : nodeData.stage
     );
 
-    // L2-06: Size by max lead time risk
+    // L2-06: Size by max lead time risk (toggleable)
     const risk = data.risk[nodeId];
     const riskLt = risk?.max_lt ?? nodeData.lt;
-    const sizeRatio = globalMaxLt > 0 ? riskLt / globalMaxLt : 0.5;
-    const size =
-      MIN_NODE_SIZE + sizeRatio * (MAX_NODE_SIZE - MIN_NODE_SIZE);
+    let size: number;
+    if (nodeSizing) {
+      const sizeRatio = globalMaxLt > 0 ? riskLt / globalMaxLt : 0.5;
+      size = MIN_NODE_SIZE + sizeRatio * (MAX_NODE_SIZE - MIN_NODE_SIZE);
+    } else {
+      size = UNIFORM_NODE_SIZE;
+    }
 
     // Label: use restored name if available, otherwise hash prefix
     let label = nodeId.slice(0, 8) + "...";

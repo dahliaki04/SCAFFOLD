@@ -13,6 +13,7 @@ import { SiteFilter } from "./SiteFilter";
 import { DepthFilter } from "./DepthFilter";
 import { ProductList } from "./ProductList";
 import { KeyRestore } from "./KeyRestore";
+import { NodeSizeToggle } from "./NodeSizeToggle";
 import { Landing } from "./Landing";
 
 function AppContent() {
@@ -77,6 +78,7 @@ function AppContent() {
           <StageFilter />
           <SiteFilter />
           <DepthFilter />
+          <NodeSizeToggle />
           <KeyRestore />
         </div>
 
