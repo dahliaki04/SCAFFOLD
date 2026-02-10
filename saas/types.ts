@@ -26,6 +26,13 @@ export interface ScaffoldRisk {
   depth: number;
 }
 
+/** Pattern group in upload.json (L1-12). */
+export interface ScaffoldPattern {
+  site_sequences: string[][]; // masked site hash sequences per path
+  products: string[]; // end product hashes sharing this pattern
+  depth: number; // max path length
+}
+
 /** Meta section of upload.json. */
 export interface ScaffoldMeta {
   version: string;
@@ -40,6 +47,7 @@ export interface ScaffoldJSON {
   nodes: Record<string, ScaffoldNode>;
   edges: ScaffoldEdge[];
   paths: Record<string, string[]>;
+  patterns: Record<string, ScaffoldPattern>;
   risk: Record<string, ScaffoldRisk>;
 }
 
