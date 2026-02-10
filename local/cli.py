@@ -4,9 +4,12 @@
 Portable, offline-first pipeline:
     CSV/Excel → Validate → Risk Engine → Dual Ledger (upload.json + key.scaf)
 
-Usage:
+Usage (CSV — three separate files):
     python -m local.cli --pm parts.csv --bom bom.csv --sup suppliers.csv \\
                         --password MY_PASSWORD --output-dir output/
+
+Usage (Excel — single workbook with Part Master / BOM Structure / Supplier Map tabs):
+    python -m local.cli --input data.xlsx --password MY_PASSWORD --output-dir output/
 
 All processing happens locally. No network calls. No data leaves your machine.
 """
@@ -17,25 +20,66 @@ from pathlib import Path
 from datetime import datetime
 
 
+def _read_inputs(args: argparse.Namespace):
+    """Read input data from either a single Excel workbook or three CSVs.
+
+    L1-07: Multi-format Input — supports .xlsx (via xlwings) and .csv.
+    """
+    import pandas as pd
+
+    if args.input:
+        input_path = Path(args.input)
+        ext = input_path.suffix.lower()
+        if ext in (".xlsx", ".xls"):
+            from local.core.reader import (
+                read_part_master,
+                read_bom,
+                read_supplier_map,
+            )
+            pm_df = read_part_master(input_path)
+            bom_df = read_bom(input_path)
+            sup_df = read_supplier_map(input_path)
+        elif ext == ".csv":
+            raise SystemExit(
+                "ERROR: --input with .csv requires three separate files. "
+                "Use --pm, --bom, --sup instead."
+            )
+        else:
+            raise SystemExit(f"ERROR: Unsupported input format: {ext}")
+    else:
+        pm_df = pd.read_csv(args.pm)
+        bom_df = pd.read_csv(args.bom)
+        sup_df = pd.read_csv(args.sup)
+
+    # Normalize IsEndProduct to bool
+    pm_df["IsEndProduct"] = pm_df["IsEndProduct"].apply(
+        lambda v: v if isinstance(v, bool) else str(v).upper() == "TRUE"
+    )
+    return pm_df, bom_df, sup_df
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         prog="scaffold",
         description="SCAFFOLD — Supply chain structure audit tool (offline)",
     )
-    parser.add_argument(
+    # L1-07: Multi-format input — single Excel workbook OR three CSVs
+    input_group = parser.add_mutually_exclusive_group(required=True)
+    input_group.add_argument(
+        "--input",
+        help="Path to Excel workbook (.xlsx) with Part Master / BOM Structure / Supplier Map tabs",
+    )
+    input_group.add_argument(
         "--pm",
-        required=True,
         help="Path to Part Master CSV file",
     )
     parser.add_argument(
         "--bom",
-        required=True,
-        help="Path to BOM Structure CSV file",
+        help="Path to BOM Structure CSV file (required with --pm)",
     )
     parser.add_argument(
         "--sup",
-        required=True,
-        help="Path to Supplier Map CSV file",
+        help="Path to Supplier Map CSV file (required with --pm)",
     )
     parser.add_argument(
         "--password",
@@ -57,7 +101,26 @@ def main() -> None:
         action="store_true",
         help="Only validate inputs, do not generate outputs",
     )
+    parser.add_argument(
+        "--license-key",
+        default=None,
+        help="License key string (SCAF-<TIER>-...) for tier gating",
+    )
+    parser.add_argument(
+        "--export-kinaxis",
+        action="store_true",
+        help="Export Kinaxis V7 RapidResponse CSV",
+    )
+    parser.add_argument(
+        "--export-csv",
+        action="store_true",
+        help="Export generic CSV",
+    )
     args = parser.parse_args()
+
+    # Validate that CSV mode has all three files
+    if args.pm and (not args.bom or not args.sup):
+        parser.error("--pm requires --bom and --sup")
 
     import pandas as pd
     import orjson
@@ -74,6 +137,7 @@ def main() -> None:
         generate_key_scaf,
         generate_upload_json,
     )
+    from local.core.licensing import verify_license, TIER_FREE
     from local.reports.reports import (
         generate_network_summary,
         timestamped_filename,
@@ -82,14 +146,19 @@ def main() -> None:
     out_dir = Path(args.output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # ── Step 1: Read CSV inputs ──────────────────────────
+    # ── Step 0: Verify license ────────────────────────────
+    tier = TIER_FREE
+    if args.license_key:
+        tier_result = verify_license(args.license_key)
+        if tier_result is None:
+            print("WARNING: Invalid license key — falling back to Free tier")
+        else:
+            tier = tier_result
+            print(f"License verified: {tier} tier")
+
+    # ── Step 1: Read inputs ───────────────────────────────
     print("[1/6] Reading input files...")
-    pm_df = pd.read_csv(args.pm)
-    pm_df["IsEndProduct"] = pm_df["IsEndProduct"].apply(
-        lambda v: v if isinstance(v, bool) else str(v).upper() == "TRUE"
-    )
-    bom_df = pd.read_csv(args.bom)
-    sup_df = pd.read_csv(args.sup)
+    pm_df, bom_df, sup_df = _read_inputs(args)
     print(
         f"      Part Master: {len(pm_df)} rows | "
         f"BOM: {len(bom_df)} edges | "
@@ -149,17 +218,44 @@ def main() -> None:
     for k, v in summary.items():
         print(f"        {k}: {v}")
 
+    # ── L1-31: Free Tier Gate ────────────────────────────
+    from local.core.licensing import TIER_FREE, TIER_LIGHT, TIER_HEAVY, check_free_tier_limits
+
+    if tier == TIER_FREE:
+        limit_error = check_free_tier_limits(pm_df, bom_df)
+        if limit_error:
+            print(f"      FREE TIER LIMIT: {limit_error}")
+            print("      Upgrade to Light/Heavy tier for unlimited processing.")
+            print("      Free tier outputs: validated.xlsx + report.pdf only.")
+            # Free tier still gets validation + summary, but no upload.json/key.scaf
+            print()
+            print("=== SCAFFOLD pipeline complete (Free tier) ===")
+            print(f"    Output directory: {out_dir}/")
+            sys.exit(0)
+
     # ── Step 5: Generate upload.json ─────────────────────
-    print("[5/6] Generating upload.json (masked)...")
-    upload_data = generate_upload_json(G, pm_df, sup_df, end_products)
-    upload_path = out_dir / "upload.json"
-    upload_path.write_bytes(
-        orjson.dumps(upload_data, option=orjson.OPT_INDENT_2)
-    )
-    print(f"      Written: {upload_path} ({upload_path.stat().st_size:,} bytes)")
+    if tier == TIER_FREE:
+        print("[5/6] Skipping upload.json (Free tier)")
+    else:
+        print("[5/6] Generating upload.json (masked)...")
+        upload_data = generate_upload_json(G, pm_df, sup_df, end_products)
+        # Embed tier signature if licensed
+        if args.license_key and tier != TIER_FREE:
+            from local.core.licensing import extract_tier_sig
+            tier_sig = extract_tier_sig(args.license_key)
+            if tier_sig:
+                upload_data["meta"]["tier"] = tier
+                upload_data["meta"]["tier_sig"] = tier_sig
+        upload_path = out_dir / "upload.json"
+        upload_path.write_bytes(
+            orjson.dumps(upload_data, option=orjson.OPT_INDENT_2)
+        )
+        print(f"      Written: {upload_path} ({upload_path.stat().st_size:,} bytes)")
 
     # ── Step 6: Generate key.scaf ────────────────────────
-    if args.skip_key:
+    if tier not in (TIER_HEAVY,):
+        print("[6/6] Skipping key.scaf (requires Heavy tier)")
+    elif args.skip_key:
         print("[6/6] Skipping key.scaf (--skip-key)")
     elif not args.password:
         print("[6/6] Skipping key.scaf (no --password provided)")
@@ -171,10 +267,26 @@ def main() -> None:
         key_path.write_bytes(key_bytes)
         print(f"      Written: {key_path} ({key_path.stat().st_size:,} bytes)")
 
+    # ── Export Plugins (L1-28 / L1-29) ───────────────────
+    if args.export_kinaxis:
+        print("Exporting Kinaxis V7 RapidResponse CSV...")
+        from local.export.kinaxis_v7 import export_kinaxis_v7
+        k_path = out_dir / timestamped_filename("kinaxis_v7", "csv")
+        export_kinaxis_v7(G, pm_df, sup_df, bom_df, k_path)
+        print(f"      Written: {k_path}")
+
+    if args.export_csv:
+        print("Exporting generic CSV...")
+        from local.export.csv_export import export_generic_csv
+        c_path = out_dir / timestamped_filename("export", "csv")
+        export_generic_csv(G, pm_df, sup_df, bom_df, c_path)
+        print(f"      Written: {c_path}")
+
     # ── Done ─────────────────────────────────────────────
     print()
     print("=== SCAFFOLD pipeline complete ===")
     print(f"    Output directory: {out_dir}/")
+    print(f"    Tier: {tier}")
 
 
 if __name__ == "__main__":
