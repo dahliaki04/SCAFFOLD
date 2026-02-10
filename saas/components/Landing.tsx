@@ -581,8 +581,6 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
                 <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
                 <li><span className="check"><CheckIcon /></span> Export plugins (Kinaxis, CSV)</li>
-                <li><span className="check"><CheckIcon /></span> Priority support</li>
-                <li><span className="check"><CheckIcon /></span> RSA-signed license</li>
               </ul>
               <button className="btn btn-outline btn-block" disabled>
                 Coming Soon
