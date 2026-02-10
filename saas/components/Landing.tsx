@@ -520,12 +520,12 @@ export function Landing() {
           <div className="pricing-grid">
             {/* Free */}
             <div className="pricing-card">
-              <div className="pricing-tier">Hardhat</div>
+              <div className="pricing-tier">Taste</div>
               <div className="pricing-price">
                 $0<span>/forever</span>
               </div>
               <div className="pricing-desc">
-                Grab a hardhat and poke around.
+                Get a feel for your BOM structure.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
@@ -541,15 +541,15 @@ export function Landing() {
               </button>
             </div>
 
-            {/* Scaffold — Coming Soon */}
+            {/* Crunch — Coming Soon */}
             <div className="pricing-card pricing-coming-soon">
               <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Scaffold</div>
+              <div className="pricing-tier">Crunch</div>
               <div className="pricing-price">
                 $49<span>/month</span>
               </div>
               <div className="pricing-desc">
-                The full rig — no limits, no excuses.
+                Analyze everything. No limits.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
@@ -565,18 +565,18 @@ export function Landing() {
               </button>
             </div>
 
-            {/* Skyline — Coming Soon */}
+            {/* Ship — Coming Soon */}
             <div className="pricing-card pricing-coming-soon">
               <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Skyline</div>
+              <div className="pricing-tier">Ship</div>
               <div className="pricing-price">
                 $129<span>/month</span>
               </div>
               <div className="pricing-desc">
-                See the whole picture. Own the presentation.
+                Get the job done. Own the deliverable.
               </div>
               <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Scaffold</li>
+                <li><span className="check"><CheckIcon /></span> Everything in Crunch</li>
                 <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
                 <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
                 <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
