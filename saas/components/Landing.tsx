@@ -359,8 +359,8 @@ export function Landing() {
           <div className="section-header">
             <h2>Built for supply chain consultants</h2>
             <p>
-              Audit your customer's BOM structure, identify risk, and present
-              findings — without ever exposing their proprietary data.
+              Analyze your customer's BOM structure, identify patterns and
+              present findings — without ever exposing their proprietary data.
             </p>
           </div>
           <div className="features-grid">
