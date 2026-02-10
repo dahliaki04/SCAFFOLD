@@ -199,6 +199,53 @@
   border-radius: 4px;
 }
 
+/* ── Trust Banner ────────────────────────────────────── */
+
+.landing-trust-banner {
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 48px 24px;
+}
+
+.landing-trust-inner {
+  max-width: 1140px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+}
+
+.trust-item {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.trust-item svg {
+  flex-shrink: 0;
+  color: var(--accent);
+  margin-top: 2px;
+}
+
+.trust-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trust-item strong {
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.trust-item span {
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 /* ── Sections ────────────────────────────────────────── */
 
 .landing-section {
@@ -772,6 +819,11 @@
 
   .landing-hero-visual {
     max-width: 360px;
+  }
+
+  .landing-trust-inner {
+    grid-template-columns: 1fr;
+    gap: 24px;
   }
 
   .demo-showcase {
