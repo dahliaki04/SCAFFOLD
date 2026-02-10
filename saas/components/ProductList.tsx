@@ -3,7 +3,8 @@
  *
  * Right sidebar: list all FG (end product) nodes.
  * Clicking a product enters subgraph view (L2-14).
- * Products are grouped by L1-12 pattern when pattern data is available.
+ * Products are dynamically grouped by L1-12 pattern data when available.
+ * Pattern summaries (unique sites, paths, route) are derived from site_sequences.
  */
 
 import { useMemo } from "react";
@@ -19,7 +20,28 @@ interface ProductInfo {
 interface PatternGroup {
   patternId: string;
   depth: number;
+  pathCount: number;
+  uniqueSites: string[]; // display labels: restored names or hash prefix
+  route: string; // e.g. "WAF → HUB → PLT" or "08d4… → 133a… → 3654…"
   products: ProductInfo[];
+}
+
+/**
+ * Derive unique ordered sites from site_sequences.
+ * Preserves first-seen order (the structural route).
+ */
+function deriveUniqueSites(sequences: string[][]): string[] {
+  const seen = new Set<string>();
+  const ordered: string[] = [];
+  for (const seq of sequences) {
+    for (const siteHash of seq) {
+      if (!seen.has(siteHash)) {
+        seen.add(siteHash);
+        ordered.push(siteHash);
+      }
+    }
+  }
+  return ordered;
 }
 
 export function ProductList() {
@@ -41,7 +63,20 @@ export function ProductList() {
     return map;
   }, [data, keyData]);
 
-  // Group products by pattern (L1-12)
+  // Build site hash → real name lookup (for key restore)
+  const siteHashToName = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!data?.nodes || !keyData?.nodes) return map;
+    for (const [nodeId, nodeData] of Object.entries(data.nodes)) {
+      const restored = keyData.nodes[nodeId];
+      if (restored && !map.has(nodeData.site)) {
+        map.set(nodeData.site, restored.site);
+      }
+    }
+    return map;
+  }, [data, keyData]);
+
+  // Dynamically group products by pattern (L1-12)
   const { groups, ungrouped } = useMemo(() => {
     if (!data) return { groups: [] as PatternGroup[], ungrouped: [] as ProductInfo[] };
 
@@ -60,9 +95,24 @@ export function ProductList() {
           grouped.add(prodId);
         }
       }
-      if (products.length > 0) {
-        groups.push({ patternId, depth: pattern.depth, products });
-      }
+      if (products.length === 0) continue;
+
+      // Derive structural info from site_sequences
+      const siteHashes = deriveUniqueSites(pattern.site_sequences);
+      const uniqueSites = siteHashes.map((hash) =>
+        siteHashToName.get(hash) ?? hash.slice(0, 6) + "…"
+      );
+
+      const route = uniqueSites.join(" → ");
+
+      groups.push({
+        patternId,
+        depth: pattern.depth,
+        pathCount: pattern.site_sequences.length,
+        uniqueSites,
+        route,
+        products,
+      });
     }
 
     // Products not in any pattern
@@ -74,7 +124,7 @@ export function ProductList() {
     }
 
     return { groups, ungrouped };
-  }, [data, productMap]);
+  }, [data, productMap, siteHashToName]);
 
   const hasPatterns = groups.length > 0;
   const totalProducts = productMap.size;
@@ -111,20 +161,25 @@ export function ProductList() {
 
         {hasPatterns ? (
           <>
-            {groups.map((group, idx) => (
+            {groups.map((group) => (
               <div key={group.patternId} className="pattern-group">
                 <div className="pattern-group-header">
-                  Pattern {idx + 1}
+                  <span className="pattern-group-id">{group.patternId}</span>
                   <span className="badge">
-                    {group.products.length} products · depth {group.depth}
+                    {group.uniqueSites.length} sites · {group.pathCount} paths · depth {group.depth}
                   </span>
+                </div>
+                <div className="pattern-route" title={group.route}>
+                  {group.route}
                 </div>
                 {group.products.map(renderProduct)}
               </div>
             ))}
             {ungrouped.length > 0 && (
               <div className="pattern-group">
-                <div className="pattern-group-header">Ungrouped</div>
+                <div className="pattern-group-header">
+                  <span className="pattern-group-id">Ungrouped</span>
+                </div>
                 {ungrouped.map(renderProduct)}
               </div>
             )}
