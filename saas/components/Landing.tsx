@@ -357,7 +357,7 @@ export function Landing() {
       <section className="landing-section" id="features">
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Built for supply chain consultants</h2>
+            <h2>Built for the people behind the BOM</h2>
             <p>
               Analyze your customer's BOM structure, identify patterns and
               present findings — without ever exposing their proprietary data.
