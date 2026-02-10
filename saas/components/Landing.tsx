@@ -541,15 +541,15 @@ export function Landing() {
               </button>
             </div>
 
-            {/* Crunch — Coming Soon */}
+            {/* Scope — Coming Soon */}
             <div className="pricing-card pricing-coming-soon">
               <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Crunch</div>
+              <div className="pricing-tier">Scope</div>
               <div className="pricing-price">
                 $49<span>/month</span>
               </div>
               <div className="pricing-desc">
-                Analyze everything. No limits.
+                See the full picture. No limits.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
@@ -565,18 +565,18 @@ export function Landing() {
               </button>
             </div>
 
-            {/* Ship — Coming Soon */}
+            {/* Deliver — Coming Soon */}
             <div className="pricing-card pricing-coming-soon">
               <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Ship</div>
+              <div className="pricing-tier">Deliver</div>
               <div className="pricing-price">
                 $129<span>/month</span>
               </div>
               <div className="pricing-desc">
-                Get the job done. Own the deliverable.
+                Present to clients. Own the deliverable.
               </div>
               <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Crunch</li>
+                <li><span className="check"><CheckIcon /></span> Everything in Scope</li>
                 <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
                 <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
                 <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
