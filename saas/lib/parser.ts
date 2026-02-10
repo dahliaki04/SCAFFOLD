@@ -78,6 +78,16 @@ export function parseScaffoldJSON(input: string | object): ScaffoldJSON {
     throw new ParseError('"paths" must be an object');
   }
 
+  // Validate patterns (optional — default to empty for backward compat)
+  if ("patterns" in obj) {
+    const patterns = obj.patterns;
+    if (typeof patterns !== "object" || patterns === null || Array.isArray(patterns)) {
+      throw new ParseError('"patterns" must be an object');
+    }
+  } else {
+    obj.patterns = {};
+  }
+
   // Validate risk
   const risk = obj.risk;
   if (typeof risk !== "object" || risk === null || Array.isArray(risk)) {
