@@ -546,7 +546,7 @@ export function Landing() {
               <div className="pricing-badge">Coming Soon</div>
               <div className="pricing-tier">Scope</div>
               <div className="pricing-price">
-                $49<span>/month</span>
+                $19.9<span>/month</span>
               </div>
               <div className="pricing-desc">
                 See the full picture. No limits.
@@ -570,7 +570,7 @@ export function Landing() {
               <div className="pricing-badge">Coming Soon</div>
               <div className="pricing-tier">Deliver</div>
               <div className="pricing-price">
-                $129<span>/month</span>
+                $39.9<span>/month</span>
               </div>
               <div className="pricing-desc">
                 Present to clients. Own the deliverable.
