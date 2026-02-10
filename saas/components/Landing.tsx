@@ -193,9 +193,8 @@ export function Landing() {
             <a href="#demo">Demo</a>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="#pricing">Pricing</a>
-            <button className="btn btn-accent btn-sm" onClick={loadDemo} disabled={demoLoading}>
-              {demoLoading ? "Loading..." : "Try Demo"}
+            <button className="btn btn-accent btn-sm" onClick={scrollToDemo}>
+              Try Demo
             </button>
             <button className="btn btn-primary btn-sm" onClick={scrollToUpload}>
               Open Viewer
@@ -510,83 +509,16 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Pricing ────────────────────────────────────── */}
+      {/* ── Pricing (Coming Soon) ────────────────────────── */}
       <section className="landing-section" id="pricing">
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Simple, transparent pricing</h2>
-            <p>Start free. Upgrade when you need more.</p>
-          </div>
-          <div className="pricing-grid">
-            {/* Free */}
-            <div className="pricing-card">
-              <div className="pricing-tier">Free</div>
-              <div className="pricing-price">
-                $0<span>/forever</span>
-              </div>
-              <div className="pricing-desc">
-                Try SCAFFOLD with small datasets.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
-                <li><span className="check"><CheckIcon /></span> Up to 2,000 BOM rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF audit report</li>
-                <li><span className="cross"><CrossIcon /></span> upload.json generation</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
-                <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
-              </ul>
-              <button className="btn btn-outline btn-block" onClick={scrollToUpload}>
-                Get Started
-              </button>
-            </div>
-
-            {/* Light */}
-            <div className="pricing-card pricing-featured">
-              <div className="pricing-badge">Most Popular</div>
-              <div className="pricing-tier">Light</div>
-              <div className="pricing-price">
-                $49<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                Full analysis for unlimited datasets.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF audit report</li>
-                <li><span className="check"><CheckIcon /></span> upload.json generation</li>
-                <li><span className="check"><CheckIcon /></span> SaaS masked browse</li>
-                <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf / label restore</li>
-              </ul>
-              <button className="btn btn-primary btn-block">
-                Subscribe
-              </button>
-            </div>
-
-            {/* Heavy */}
-            <div className="pricing-card">
-              <div className="pricing-tier">Heavy</div>
-              <div className="pricing-price">
-                $129<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                Complete platform with full restore.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Light</li>
-                <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
-                <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
-                <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
-                <li><span className="check"><CheckIcon /></span> Export plugins (Kinaxis, CSV)</li>
-                <li><span className="check"><CheckIcon /></span> Priority support</li>
-                <li><span className="check"><CheckIcon /></span> RSA-signed license</li>
-              </ul>
-              <button className="btn btn-outline btn-block">
-                Subscribe
-              </button>
-            </div>
+            <h2>Pricing coming soon</h2>
+            <p>
+              SCAFFOLD is free to use during early access. Three tiers
+              (Free, Light, Heavy) are planned — start exploring today
+              and you'll be the first to know when pricing goes live.
+            </p>
           </div>
         </div>
       </section>
@@ -649,7 +581,7 @@ export function Landing() {
           <div className="footer-brand">
             <span className="landing-logo">SCAFFOLD</span>
             <span className="footer-copy">
-              Supply chain structure audit platform.
+              Your BOM analysis buddy.
             </span>
           </div>
           <div className="footer-links">
