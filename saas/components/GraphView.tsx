@@ -27,9 +27,36 @@ export function GraphView() {
     searchQuery,
     keyData,
     nodeSizeEnabled,
+    selectedPattern,
   } = useScaffold();
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+
+  // Compute highlighted nodes for selected pattern (all full paths, root to leaf)
+  const patternNodes = useMemo(() => {
+    if (!selectedPattern || !data?.patterns?.[selectedPattern]) return null;
+    const pattern = data.patterns[selectedPattern];
+    const nodes = new Set<string>();
+    for (const productHash of pattern.products) {
+      const productPaths = data.paths[productHash];
+      if (!productPaths) continue;
+      // Each path is a list of node hashes from root to leaf
+      if (Array.isArray(productPaths[0])) {
+        // paths is array of arrays (list of full paths)
+        for (const path of productPaths as unknown as string[][]) {
+          for (const nodeHash of path) {
+            nodes.add(nodeHash);
+          }
+        }
+      } else {
+        // paths is a flat array of node hashes (single flattened list)
+        for (const nodeHash of productPaths) {
+          nodes.add(nodeHash);
+        }
+      }
+    }
+    return nodes.size > 0 ? nodes : null;
+  }, [selectedPattern, data]);
 
   // Build graph with current filters
   const graph = useMemo(() => {
@@ -134,12 +161,13 @@ export function GraphView() {
     };
   }, [graph]);
 
-  // L2-09: Hover highlight effect — dim non-neighbor nodes
+  // L2-09: Hover highlight + pattern full-path highlight
   useEffect(() => {
     const sigma = sigmaRef.current;
     if (!sigma) return;
 
     if (hoveredNode) {
+      // Hover takes priority: highlight immediate neighbors
       const neighbors = new Set<string>();
       neighbors.add(hoveredNode);
       graph.forEachNeighbor(hoveredNode, (neighbor) => {
@@ -160,13 +188,29 @@ export function GraphView() {
         }
         return { ...data, color: "#1a1d22", size: 0.5 };
       });
+    } else if (patternNodes) {
+      // Pattern selected: highlight all nodes on full paths (root to leaf)
+      sigma.setSetting("nodeReducer", (node, data) => {
+        if (patternNodes.has(node)) {
+          return { ...data, zIndex: 1 };
+        }
+        return { ...data, color: "#2a2d35", label: "", zIndex: 0 };
+      });
+      sigma.setSetting("edgeReducer", (edge, data) => {
+        const source = graph.source(edge);
+        const target = graph.target(edge);
+        if (patternNodes.has(source) && patternNodes.has(target)) {
+          return { ...data, color: "#888", size: 2 };
+        }
+        return { ...data, color: "#1a1d22", size: 0.5 };
+      });
     } else {
       sigma.setSetting("nodeReducer", null);
       sigma.setSetting("edgeReducer", null);
     }
 
     sigma.refresh();
-  }, [hoveredNode, graph]);
+  }, [hoveredNode, patternNodes, graph]);
 
   // Highlight searched node
   useEffect(() => {
