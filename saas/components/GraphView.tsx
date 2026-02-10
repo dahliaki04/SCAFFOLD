@@ -26,6 +26,7 @@ export function GraphView() {
     selectedProduct,
     searchQuery,
     keyData,
+    nodeSizeEnabled,
   } = useScaffold();
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
@@ -48,8 +49,9 @@ export function GraphView() {
       depthFilter: depthFilter === Infinity ? null : depthFilter,
       subgraphRoot: selectedProduct,
       keyData,
+      nodeSizeEnabled,
     });
-  }, [data, stageFilters, siteFilters, depthFilter, selectedProduct, keyData]);
+  }, [data, stageFilters, siteFilters, depthFilter, selectedProduct, keyData, nodeSizeEnabled]);
 
   // Apply force-directed layout
   useEffect(() => {

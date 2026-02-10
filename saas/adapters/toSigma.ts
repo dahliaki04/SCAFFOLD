@@ -32,6 +32,8 @@ export interface ToSigmaOptions {
   subgraphRoot?: string | null;
   /** Key restore data for real labels. */
   keyData?: KeyScafData | null;
+  /** Whether to scale node size by risk (Max LT). False = uniform size. */
+  nodeSizeEnabled?: boolean;
 }
 
 /**
@@ -50,6 +52,7 @@ export function toSigmaGraph(
     depthFilter = null,
     subgraphRoot = null,
     keyData = null,
+    nodeSizeEnabled = true,
   } = options;
 
   const graph = new Graph({ type: "directed", multi: false });
@@ -87,12 +90,17 @@ export function toSigmaGraph(
       keyData?.stages?.[nodeData.stage] ? nodeData.stage : nodeData.stage
     );
 
-    // L2-06: Size by max lead time risk
+    // L2-06: Size by max lead time risk (toggleable)
     const risk = data.risk[nodeId];
     const riskLt = risk?.max_lt ?? nodeData.lt;
-    const sizeRatio = globalMaxLt > 0 ? riskLt / globalMaxLt : 0.5;
-    const size =
-      MIN_NODE_SIZE + sizeRatio * (MAX_NODE_SIZE - MIN_NODE_SIZE);
+    const UNIFORM_NODE_SIZE = 8;
+    let size: number;
+    if (nodeSizeEnabled) {
+      const sizeRatio = globalMaxLt > 0 ? riskLt / globalMaxLt : 0.5;
+      size = MIN_NODE_SIZE + sizeRatio * (MAX_NODE_SIZE - MIN_NODE_SIZE);
+    } else {
+      size = UNIFORM_NODE_SIZE;
+    }
 
     // Label: use restored name if available, otherwise hash prefix
     let label = nodeId.slice(0, 8) + "...";
