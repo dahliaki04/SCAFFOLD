@@ -1,9 +1,12 @@
 /**
  * SCAFFOLD SaaS Platform — Main Application.
  *
- * Layout: Header + Sidebar (left) + Main View (center/right).
+ * Layout:
+ *   Desktop (>768px): Header + Sidebar (left) + Main View (right).
+ *   Mobile (<=768px): Header + Collapsible controls (top) + Main View (below).
  */
 
+import { useState } from "react";
 import { ScaffoldProvider, useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { GraphView } from "./GraphView";
 import { SankeyView } from "./SankeyView";
@@ -19,6 +22,7 @@ import { Landing } from "./Landing";
 function AppContent() {
   const { loaded, data, viewMode, restored } = useScaffold();
   const dispatch = useDispatch();
+  const [panelOpen, setPanelOpen] = useState(false);
 
   if (!loaded) {
     return <Landing />;
@@ -65,11 +69,20 @@ function AppContent() {
             )}
           </div>
         </div>
+
+        {/* Mobile panel toggle */}
+        <button
+          className="panel-toggle"
+          onClick={() => setPanelOpen((prev) => !prev)}
+          aria-label={panelOpen ? "Hide controls" : "Show controls"}
+        >
+          {panelOpen ? "\u2715" : "\u2630"}
+        </button>
       </header>
 
       <div className="app-body">
-        {/* Left sidebar */}
-        <div className="sidebar">
+        {/* Controls panel — sidebar on desktop, collapsible top panel on mobile */}
+        <div className={`sidebar ${panelOpen ? "sidebar--open" : ""}`}>
           <div className="sidebar-section">
             <h3>Search</h3>
             <SearchBar />

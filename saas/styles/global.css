@@ -553,3 +553,96 @@ body {
   color: var(--text-muted);
   font-size: 14px;
 }
+
+/* Panel toggle button — hidden on desktop, shown on mobile */
+.panel-toggle {
+  display: none;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.panel-toggle:hover {
+  background: var(--border);
+}
+
+/* ========================================
+   Responsive: Mobile / Tablet (<=768px)
+   ======================================== */
+@media (max-width: 768px) {
+  .panel-toggle {
+    display: flex;
+  }
+
+  /* Header: compact for small screens */
+  .app-header {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: var(--header-height);
+    padding: 8px 12px;
+    gap: 8px;
+  }
+
+  .stats-bar {
+    gap: 10px;
+    font-size: 11px;
+    margin-left: 0;
+    order: 1;
+    width: 100%;
+  }
+
+  /* Body: stack vertically on mobile */
+  .app-body {
+    flex-direction: column;
+  }
+
+  /* Sidebar becomes a top panel */
+  .sidebar {
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    transition: max-height 0.3s ease;
+    flex-shrink: 0;
+  }
+
+  .sidebar--open {
+    max-height: 50vh;
+    overflow-y: auto;
+  }
+
+  /* Two-column grid for filters on mobile */
+  .sidebar--open > .sidebar-section,
+  .sidebar--open > :is(.sidebar-section) {
+    padding: 8px 12px;
+  }
+
+  /* Main view fills remaining space */
+  .main-view {
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Landing page: smaller drop area on mobile */
+  .upload-zone .drop-area {
+    width: 90vw;
+    max-width: 400px;
+    height: 160px;
+  }
+
+  /* Modal: full-width on small screens */
+  .modal {
+    width: calc(100vw - 32px);
+    max-width: 360px;
+  }
+}
