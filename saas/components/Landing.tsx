@@ -370,8 +370,8 @@ export function Landing() {
               </div>
               <h3>Interactive BOM Graph</h3>
               <p>
-                Sigma.js WebGL rendering with stage-colored nodes, risk-based
-                sizing, hover highlighting, and per-product subgraph views.
+                Stage-colored nodes, risk-based sizing, hover highlighting,
+                and per-product subgraph views. See your full structure at a glance.
               </p>
             </div>
             <div className="feature-card">
@@ -380,8 +380,8 @@ export function Landing() {
               </div>
               <h3>Sankey Flow Diagrams</h3>
               <p>
-                D3.js-powered multi-hop flow visualization. Select a finished
-                good and trace every path through your supply chain.
+                Multi-hop flow visualization. Select a finished good and trace
+                every path through your supply chain.
               </p>
             </div>
             <div className="feature-card">
@@ -400,7 +400,7 @@ export function Landing() {
               </div>
               <h3>Privacy by Design</h3>
               <p>
-                SHA-256 hashed names, jittered values, masked stages. Your
+                Names are hashed, values are jittered, stages are masked. Your
                 customer's real data never leaves the local machine.
               </p>
             </div>
@@ -410,8 +410,8 @@ export function Landing() {
               </div>
               <h3>Client-side Decrypt</h3>
               <p>
-                Restore real labels in the browser with key.scaf. AES
-                decryption happens entirely client-side — zero network calls.
+                Restore real labels in the browser with key.scaf. Decryption
+                happens entirely client-side — zero network calls.
               </p>
             </div>
             <div className="feature-card">
