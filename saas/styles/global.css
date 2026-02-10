@@ -332,6 +332,23 @@ body {
   color: var(--text-muted);
 }
 
+/* Pattern tooltip */
+.pattern-tooltip {
+  position: absolute;
+  left: 105%;
+  top: 0;
+  z-index: 100;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  min-width: 180px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
 /* Key restore */
 .key-drop-zone {
   width: 100%;
