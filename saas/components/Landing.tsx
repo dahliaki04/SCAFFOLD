@@ -282,29 +282,27 @@ export function Landing() {
       {/* ── Trust Banner ─────────────────────────────────── */}
       <section className="landing-trust-banner">
         <div className="landing-trust-inner">
-          <ul className="trust-bullets">
-            <li className="trust-bullet">
-              <span className="trust-bullet-marker" />
-              <div>
-                <strong>Free offline local tool</strong>
-                <span>Structure-check your product BOMs, visualize lead time weight, and generate reports — fully offline, zero internet required.</span>
-              </div>
-            </li>
-            <li className="trust-bullet">
-              <span className="trust-bullet-marker" />
-              <div>
-                <strong>Browser-only online viewer</strong>
-                <span>All processing happens in your browser's memory. Nothing is uploaded to any server — verifiable in DevTools Network tab.</span>
-              </div>
-            </li>
-            <li className="trust-bullet">
-              <span className="trust-bullet-marker" />
-              <div>
-                <strong>Safe for sensitive data</strong>
-                <span>Names are SHA-256 hashed, values are jittered, stages are masked. The upload file reveals zero business terms.</span>
-              </div>
-            </li>
-          </ul>
+          <div className="trust-item">
+            <ShieldIcon />
+            <div>
+              <strong>Free offline local tool</strong>
+              <span>Structure-check your product BOMs, visualize lead time weight, and generate reports — fully offline, zero internet required.</span>
+            </div>
+          </div>
+          <div className="trust-item">
+            <LockIcon />
+            <div>
+              <strong>Browser-only online viewer</strong>
+              <span>All processing happens in your browser's memory. Nothing is uploaded to any server — verifiable in DevTools Network tab.</span>
+            </div>
+          </div>
+          <div className="trust-item">
+            <LayersIcon />
+            <div>
+              <strong>Safe for sensitive data</strong>
+              <span>Names are SHA-256 hashed, values are jittered, stages are masked. The upload file reveals zero business terms.</span>
+            </div>
+          </div>
         </div>
       </section>
 
