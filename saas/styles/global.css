@@ -332,6 +332,25 @@ body {
   color: var(--text-muted);
 }
 
+/* Pattern groups (L1-12) */
+.pattern-group {
+  margin-top: 6px;
+  border-left: 2px solid var(--border);
+  padding-left: 8px;
+}
+
+.pattern-group-header {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Key restore */
 .key-drop-zone {
   width: 100%;
