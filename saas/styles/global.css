@@ -332,6 +332,20 @@ body {
   color: var(--text-muted);
 }
 
+/* Toggle row */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toggle-row input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
 /* Pattern tooltip */
 .pattern-tooltip {
   position: absolute;

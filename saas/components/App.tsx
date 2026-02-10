@@ -12,11 +12,12 @@ import { StageFilter } from "./StageFilter";
 import { SiteFilter } from "./SiteFilter";
 import { DepthFilter } from "./DepthFilter";
 import { ProductList } from "./ProductList";
+import { PatternList } from "./PatternList";
 import { KeyRestore } from "./KeyRestore";
 import { Landing } from "./Landing";
 
 function AppContent() {
-  const { loaded, data, viewMode, restored } = useScaffold();
+  const { loaded, data, viewMode, restored, nodeSizeEnabled } = useScaffold();
   const dispatch = useDispatch();
 
   if (!loaded) {
@@ -74,6 +75,18 @@ function AppContent() {
             <SearchBar />
           </div>
           <ProductList />
+          <PatternList />
+          <div className="sidebar-section">
+            <h3>Display</h3>
+            <label className="toggle-row">
+              <input
+                type="checkbox"
+                checked={nodeSizeEnabled}
+                onChange={() => dispatch({ type: "TOGGLE_NODE_SIZE" })}
+              />
+              <span>Node size by risk</span>
+            </label>
+          </div>
           <StageFilter />
           <SiteFilter />
           <DepthFilter />
