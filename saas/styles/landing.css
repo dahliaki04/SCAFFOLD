@@ -473,6 +473,19 @@
   transform: scale(1.03);
 }
 
+.pricing-coming-soon {
+  opacity: 0.55;
+}
+
+.pricing-coming-soon .pricing-badge {
+  background: var(--text-muted);
+}
+
+.pricing-coming-soon button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .pricing-badge {
   position: absolute;
   top: -12px;

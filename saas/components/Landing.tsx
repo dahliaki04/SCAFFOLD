@@ -179,6 +179,10 @@ export function Landing() {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const scrollToDemo = () => {
+    document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="landing">
       {/* ── Navigation ─────────────────────────────────── */}
@@ -190,8 +194,8 @@ export function Landing() {
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
-            <button className="btn btn-accent btn-sm" onClick={loadDemo} disabled={demoLoading}>
-              {demoLoading ? "Loading..." : "Try Demo"}
+            <button className="btn btn-accent btn-sm" onClick={scrollToDemo}>
+              Try Demo
             </button>
             <button className="btn btn-primary btn-sm" onClick={scrollToUpload}>
               Open Viewer
@@ -203,22 +207,25 @@ export function Landing() {
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <div className="landing-hero-badge">Supply Chain Structure Audit</div>
+          <div className="landing-hero-badge">Your BOM Analysis Buddy</div>
           <h1>
             See the risk your
             <br />
             <span className="hero-accent">BOM hides</span>
           </h1>
           <p className="landing-hero-sub">
-            SCAFFOLD validates BOM structures, computes supply chain risk
-            metrics, and visualizes product flows. The local tool works
-            fully offline. This online viewer runs entirely in your
-            browser — your data never leaves your machine.
+            Map your product structure and visualize where lead time
+            accumulates across every part and stage — see which components
+            carry the most weight in your chain. Built for planners who
+            need visibility into what slows things down, and consultants
+            who need to present it. The local tool works fully offline.
+            This viewer runs entirely in your browser — your data never
+            leaves your machine.
           </p>
           <div className="landing-hero-actions">
-            <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
-              {demoLoading ? "Loading Demo..." : "Try Semiconductor Demo"}
-              <ArrowRightIcon />
+            <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
+              Try Semiconductor Demo
+              <ArrowDownIcon />
             </button>
             <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
               Upload Your Data
@@ -283,21 +290,21 @@ export function Landing() {
             <ShieldIcon />
             <div>
               <strong>Free offline local tool</strong>
-              <span>Validate BOMs, generate reports, and audit supply chains with zero internet required. Your data never touches a network.</span>
+              <span>Structure-check your product BOMs, visualize lead time weight, and generate reports — fully offline, zero internet required.</span>
             </div>
           </div>
           <div className="trust-item">
             <LockIcon />
             <div>
               <strong>Browser-only online viewer</strong>
-              <span>This web viewer processes everything in your browser's memory. No data is uploaded to any server — verify in DevTools Network tab.</span>
+              <span>All processing happens in your browser's memory. Nothing is uploaded to any server — verifiable in DevTools Network tab.</span>
             </div>
           </div>
           <div className="trust-item">
             <LayersIcon />
             <div>
               <strong>Safe for sensitive data</strong>
-              <span>Names are SHA-256 hashed, values are jittered, stages are masked. Even the masked file reveals zero business terms.</span>
+              <span>Names are SHA-256 hashed, values are jittered, stages are masked. The upload file reveals zero business terms.</span>
             </div>
           </div>
         </div>
@@ -311,8 +318,8 @@ export function Landing() {
               <div className="demo-showcase-badge">Live Demo</div>
               <h2>See SCAFFOLD in action</h2>
               <p>
-                Explore a real semiconductor BOM with 24 parts across 8 global sites,
-                covering Fabrication, Circuit Probe, Bumping, Assembly, Final Test, and Distribution.
+                Explore a semiconductor BOM with 65 parts across 8 global sites
+                and 6 process stages — from wafer fabrication through to distribution.
               </p>
               <div className="demo-showcase-actions">
                 <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
@@ -321,7 +328,7 @@ export function Landing() {
                 </button>
               </div>
               <div className="demo-showcase-info">
-                <span>3 IC products</span>
+                <span>6 finished goods</span>
                 <span className="demo-dot" />
                 <span>6 process stages</span>
                 <span className="demo-dot" />
@@ -332,9 +339,9 @@ export function Landing() {
               <div className="demo-detail-card">
                 <h4>Included in the demo</h4>
                 <ul>
-                  <li>IC-7NM-SOC — 9-level deep supply chain</li>
-                  <li>IC-28NM-MCU — 7-level manufacturing flow</li>
-                  <li>MOD-5G-RF — 4-level RF module assembly</li>
+                  <li>2 products with 8-level deep supply chains</li>
+                  <li>2 products with 6-level manufacturing flows</li>
+                  <li>2 products with 4-level assembly paths</li>
                 </ul>
               </div>
               <div className="demo-detail-card">
@@ -350,10 +357,10 @@ export function Landing() {
       <section className="landing-section" id="features">
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Built for supply chain consultants</h2>
+            <h2>Built for the people behind the BOM</h2>
             <p>
-              Audit your customer's BOM structure, identify risk, and present
-              findings — without ever exposing their proprietary data.
+              Analyze your customer's BOM structure, identify patterns and
+              present findings — without ever exposing their proprietary data.
             </p>
           </div>
           <div className="features-grid">
@@ -513,12 +520,12 @@ export function Landing() {
           <div className="pricing-grid">
             {/* Free */}
             <div className="pricing-card">
-              <div className="pricing-tier">Free</div>
+              <div className="pricing-tier">Taste</div>
               <div className="pricing-price">
                 $0<span>/forever</span>
               </div>
               <div className="pricing-desc">
-                Try SCAFFOLD with small datasets.
+                Validate, sort, and fix your BOM in place.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
@@ -534,15 +541,15 @@ export function Landing() {
               </button>
             </div>
 
-            {/* Light */}
-            <div className="pricing-card pricing-featured">
-              <div className="pricing-badge">Most Popular</div>
-              <div className="pricing-tier">Light</div>
+            {/* Scope — Coming Soon */}
+            <div className="pricing-card pricing-coming-soon">
+              <div className="pricing-badge">Coming Soon</div>
+              <div className="pricing-tier">Scope</div>
               <div className="pricing-price">
-                $49<span>/month</span>
+                $19.9<span>/month</span>
               </div>
               <div className="pricing-desc">
-                Full analysis for unlimited datasets.
+                See the full picture. No limits.
               </div>
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
@@ -553,22 +560,23 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
                 <li><span className="cross"><CrossIcon /></span> key.scaf / label restore</li>
               </ul>
-              <button className="btn btn-primary btn-block">
-                Subscribe
+              <button className="btn btn-outline btn-block" disabled>
+                Coming Soon
               </button>
             </div>
 
-            {/* Heavy */}
-            <div className="pricing-card">
-              <div className="pricing-tier">Heavy</div>
+            {/* Deliver — Coming Soon */}
+            <div className="pricing-card pricing-coming-soon">
+              <div className="pricing-badge">Coming Soon</div>
+              <div className="pricing-tier">Deliver</div>
               <div className="pricing-price">
-                $129<span>/month</span>
+                $39.9<span>/month</span>
               </div>
               <div className="pricing-desc">
-                Complete platform with full restore.
+                Present to clients. Own the deliverable.
               </div>
               <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Light</li>
+                <li><span className="check"><CheckIcon /></span> Everything in Scope</li>
                 <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
                 <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
                 <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
@@ -576,8 +584,8 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Priority support</li>
                 <li><span className="check"><CheckIcon /></span> RSA-signed license</li>
               </ul>
-              <button className="btn btn-outline btn-block">
-                Subscribe
+              <button className="btn btn-outline btn-block" disabled>
+                Coming Soon
               </button>
             </div>
           </div>
@@ -642,7 +650,7 @@ export function Landing() {
           <div className="footer-brand">
             <span className="landing-logo">SCAFFOLD</span>
             <span className="footer-copy">
-              Supply chain structure audit platform.
+              Your BOM analysis buddy.
             </span>
           </div>
           <div className="footer-links">
