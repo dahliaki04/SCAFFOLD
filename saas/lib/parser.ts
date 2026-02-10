@@ -94,6 +94,16 @@ export function parseScaffoldJSON(input: string | object): ScaffoldJSON {
     throw new ParseError('"risk" must be an object');
   }
 
+  // Validate suppliers (optional — default to empty for backward compat)
+  if ("suppliers" in obj) {
+    const suppliers = obj.suppliers;
+    if (typeof suppliers !== "object" || suppliers === null || Array.isArray(suppliers)) {
+      throw new ParseError('"suppliers" must be an object');
+    }
+  } else {
+    obj.suppliers = {};
+  }
+
   return data as ScaffoldJSON;
 }
 

@@ -17,6 +17,7 @@ import { DepthFilter } from "./DepthFilter";
 import { ProductList } from "./ProductList";
 import { KeyRestore } from "./KeyRestore";
 import { NodeSizeToggle } from "./NodeSizeToggle";
+import { SupplierImpactView } from "./SupplierImpactView";
 import { Landing } from "./Landing";
 
 function AppContent() {
@@ -88,6 +89,7 @@ function AppContent() {
             <SearchBar />
           </div>
           <ProductList />
+          <SupplierImpactView />
           <StageFilter />
           <SiteFilter />
           <DepthFilter />

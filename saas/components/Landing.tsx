@@ -370,8 +370,8 @@ export function Landing() {
               </div>
               <h3>Interactive BOM Graph</h3>
               <p>
-                Sigma.js WebGL rendering with stage-colored nodes, risk-based
-                sizing, hover highlighting, and per-product subgraph views.
+                Stage-colored nodes, risk-based sizing, hover highlighting,
+                and per-product subgraph views. See your full structure at a glance.
               </p>
             </div>
             <div className="feature-card">
@@ -380,8 +380,8 @@ export function Landing() {
               </div>
               <h3>Sankey Flow Diagrams</h3>
               <p>
-                D3.js-powered multi-hop flow visualization. Select a finished
-                good and trace every path through your supply chain.
+                Multi-hop flow visualization. Select a finished good and trace
+                every path through your supply chain.
               </p>
             </div>
             <div className="feature-card">
@@ -400,7 +400,7 @@ export function Landing() {
               </div>
               <h3>Privacy by Design</h3>
               <p>
-                SHA-256 hashed names, jittered values, masked stages. Your
+                Names are hashed, values are jittered, stages are masked. Your
                 customer's real data never leaves the local machine.
               </p>
             </div>
@@ -410,8 +410,8 @@ export function Landing() {
               </div>
               <h3>Client-side Decrypt</h3>
               <p>
-                Restore real labels in the browser with key.scaf. AES
-                decryption happens entirely client-side — zero network calls.
+                Restore real labels in the browser with key.scaf. Decryption
+                happens entirely client-side — zero network calls.
               </p>
             </div>
             <div className="feature-card">
@@ -420,7 +420,7 @@ export function Landing() {
               </div>
               <h3>Offline-first Local Tool</h3>
               <p>
-                Validate Excel BOMs, generate audit reports, and produce
+                Validate Excel BOMs, generate PDF and PPT reports, and produce
                 standalone deliverables — no internet required.
               </p>
             </div>
@@ -531,7 +531,7 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
                 <li><span className="check"><CheckIcon /></span> Up to 2,000 BOM rows</li>
                 <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF audit report</li>
+                <li><span className="check"><CheckIcon /></span> PDF report</li>
                 <li><span className="cross"><CrossIcon /></span> upload.json generation</li>
                 <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
                 <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
@@ -554,7 +554,7 @@ export function Landing() {
               <ul className="pricing-features">
                 <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
                 <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF audit report</li>
+                <li><span className="check"><CheckIcon /></span> PDF report</li>
                 <li><span className="check"><CheckIcon /></span> upload.json generation</li>
                 <li><span className="check"><CheckIcon /></span> SaaS masked browse</li>
                 <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
@@ -581,8 +581,6 @@ export function Landing() {
                 <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
                 <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
                 <li><span className="check"><CheckIcon /></span> Export plugins (Kinaxis, CSV)</li>
-                <li><span className="check"><CheckIcon /></span> Priority support</li>
-                <li><span className="check"><CheckIcon /></span> RSA-signed license</li>
               </ul>
               <button className="btn btn-outline btn-block" disabled>
                 Coming Soon

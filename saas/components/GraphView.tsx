@@ -24,6 +24,7 @@ export function GraphView() {
     siteFilters,
     depthFilter,
     selectedProduct,
+    selectedSupplier,
     searchQuery,
     keyData,
     nodeSizing,
@@ -191,10 +192,67 @@ export function GraphView() {
     [graph]
   );
 
+  // BFS upstream from multiple start nodes — for supplier impact highlighting
+  const getUpstreamChain = useCallback(
+    (startNodes: string[]): Set<string> => {
+      const visited = new Set<string>();
+      const queue = [...startNodes];
+      for (const n of queue) visited.add(n);
+      while (queue.length > 0) {
+        const current = queue.shift()!;
+        graph.forEachInNeighbor(current, (neighbor) => {
+          if (!visited.has(neighbor)) {
+            visited.add(neighbor);
+            queue.push(neighbor);
+          }
+        });
+      }
+      return visited;
+    },
+    [graph],
+  );
+
   // L2-09: Highlight effect — hover shows immediate neighbors, click shows full chain
+  // Supplier selection: highlight supplied nodes + upstream chain to end products
   useEffect(() => {
     const sigma = sigmaRef.current;
     if (!sigma) return;
+
+    // Supplier highlight takes priority when active
+    if (selectedSupplier && data?.suppliers?.[selectedSupplier]) {
+      const supInfo = data.suppliers[selectedSupplier];
+      const suppliedSet = new Set(supInfo.supplied_nodes);
+      const affectedSet = new Set(supInfo.affected_products);
+      // BFS upstream from every supplied node to find the full impact chain
+      const graphSupplied = supInfo.supplied_nodes.filter((n) => graph.hasNode(n));
+      const chain = getUpstreamChain(graphSupplied);
+
+      sigma.setSetting("nodeReducer", (node, attrs) => {
+        if (suppliedSet.has(node)) {
+          // Supplied nodes: bright cyan highlight (entry points)
+          return { ...attrs, zIndex: 2, color: "#06B6D4", highlighted: true };
+        }
+        if (affectedSet.has(node)) {
+          // Affected end products: bright red highlight
+          return { ...attrs, zIndex: 2, color: "#EA4335", highlighted: true };
+        }
+        if (chain.has(node)) {
+          // Intermediate nodes on the impact path
+          return { ...attrs, zIndex: 1 };
+        }
+        return { ...attrs, color: "#2a2d35", label: "", zIndex: 0 };
+      });
+      sigma.setSetting("edgeReducer", (edge, attrs) => {
+        const source = graph.source(edge);
+        const target = graph.target(edge);
+        if (chain.has(source) && chain.has(target)) {
+          return { ...attrs, color: "#888", size: 2 };
+        }
+        return { ...attrs, color: "#1a1d22", size: 0.5 };
+      });
+      sigma.refresh();
+      return;
+    }
 
     // Click selection takes priority over hover
     const activeNode = selectedNode ?? hoveredNode;
@@ -241,7 +299,7 @@ export function GraphView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, selectedNode, graph, getFullChain, patternPeers]);
+  }, [hoveredNode, selectedNode, selectedSupplier, data, graph, getFullChain, getUpstreamChain, patternPeers]);
 
   // Highlight searched node
   useEffect(() => {
