@@ -210,10 +210,13 @@ export function Landing() {
             <span className="hero-accent">BOM hides</span>
           </h1>
           <p className="landing-hero-sub">
-            SCAFFOLD validates BOM structures, computes supply chain risk
-            metrics, and visualizes product flows. The local tool works
-            fully offline. This online viewer runs entirely in your
-            browser — your data never leaves your machine.
+            Map your product structure and visualize where lead time
+            accumulates across every part and stage — see which components
+            carry the most weight in your chain. Built for planners who
+            need visibility into what slows things down, and consultants
+            who need to present it. The local tool works fully offline.
+            This viewer runs entirely in your browser — your data never
+            leaves your machine.
           </p>
           <div className="landing-hero-actions">
             <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
@@ -279,27 +282,29 @@ export function Landing() {
       {/* ── Trust Banner ─────────────────────────────────── */}
       <section className="landing-trust-banner">
         <div className="landing-trust-inner">
-          <div className="trust-item">
-            <ShieldIcon />
-            <div>
-              <strong>Free offline local tool</strong>
-              <span>Validate BOMs, generate reports, and audit supply chains with zero internet required. Your data never touches a network.</span>
-            </div>
-          </div>
-          <div className="trust-item">
-            <LockIcon />
-            <div>
-              <strong>Browser-only online viewer</strong>
-              <span>This web viewer processes everything in your browser's memory. No data is uploaded to any server — verify in DevTools Network tab.</span>
-            </div>
-          </div>
-          <div className="trust-item">
-            <LayersIcon />
-            <div>
-              <strong>Safe for sensitive data</strong>
-              <span>Names are SHA-256 hashed, values are jittered, stages are masked. Even the masked file reveals zero business terms.</span>
-            </div>
-          </div>
+          <ul className="trust-bullets">
+            <li className="trust-bullet">
+              <span className="trust-bullet-marker" />
+              <div>
+                <strong>Free offline local tool</strong>
+                <span>Structure-check your product BOMs, visualize lead time weight, and generate reports — fully offline, zero internet required.</span>
+              </div>
+            </li>
+            <li className="trust-bullet">
+              <span className="trust-bullet-marker" />
+              <div>
+                <strong>Browser-only online viewer</strong>
+                <span>All processing happens in your browser's memory. Nothing is uploaded to any server — verifiable in DevTools Network tab.</span>
+              </div>
+            </li>
+            <li className="trust-bullet">
+              <span className="trust-bullet-marker" />
+              <div>
+                <strong>Safe for sensitive data</strong>
+                <span>Names are SHA-256 hashed, values are jittered, stages are masked. The upload file reveals zero business terms.</span>
+              </div>
+            </li>
+          </ul>
         </div>
       </section>
 
