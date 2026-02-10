@@ -179,6 +179,10 @@ export function Landing() {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const scrollToDemo = () => {
+    document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
     <div className="landing">
       {/* ── Navigation ─────────────────────────────────── */}
@@ -219,9 +223,9 @@ export function Landing() {
             leaves your machine.
           </p>
           <div className="landing-hero-actions">
-            <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
-              {demoLoading ? "Loading Demo..." : "Try Semiconductor Demo"}
-              <ArrowRightIcon />
+            <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
+              Try Semiconductor Demo
+              <ArrowDownIcon />
             </button>
             <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
               Upload Your Data
@@ -314,8 +318,8 @@ export function Landing() {
               <div className="demo-showcase-badge">Live Demo</div>
               <h2>See SCAFFOLD in action</h2>
               <p>
-                Explore a real semiconductor BOM with 24 parts across 8 global sites,
-                covering Fabrication, Circuit Probe, Bumping, Assembly, Final Test, and Distribution.
+                Explore a semiconductor BOM with 65 parts across 8 global sites
+                and 6 process stages — from wafer fabrication through to distribution.
               </p>
               <div className="demo-showcase-actions">
                 <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
@@ -324,7 +328,7 @@ export function Landing() {
                 </button>
               </div>
               <div className="demo-showcase-info">
-                <span>3 IC products</span>
+                <span>6 finished goods</span>
                 <span className="demo-dot" />
                 <span>6 process stages</span>
                 <span className="demo-dot" />
@@ -335,9 +339,9 @@ export function Landing() {
               <div className="demo-detail-card">
                 <h4>Included in the demo</h4>
                 <ul>
-                  <li>IC-7NM-SOC — 9-level deep supply chain</li>
-                  <li>IC-28NM-MCU — 7-level manufacturing flow</li>
-                  <li>MOD-5G-RF — 4-level RF module assembly</li>
+                  <li>2 products with 8-level deep supply chains</li>
+                  <li>2 products with 6-level manufacturing flows</li>
+                  <li>2 products with 4-level assembly paths</li>
                 </ul>
               </div>
               <div className="demo-detail-card">
