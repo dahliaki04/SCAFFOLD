@@ -536,13 +536,17 @@ body {
   opacity: 0.7;
 }
 
+.supplier-multiselect {
+  position: relative;
+}
+
 .supplier-search {
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .supplier-search input {
   width: 100%;
-  padding: 5px 8px;
+  padding: 6px 10px;
   border-radius: 4px;
   border: 1px solid var(--border);
   background: var(--bg-tertiary);
@@ -553,6 +557,101 @@ body {
 
 .supplier-search input:focus {
   border-color: var(--accent);
+}
+
+.supplier-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  z-index: 20;
+}
+
+.supplier-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: background 0.1s;
+}
+
+.supplier-dropdown-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.supplier-dropdown-item.checked {
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.supplier-dropdown-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.supplier-dropdown-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.supplier-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.supplier-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: rgba(99, 102, 241, 0.15);
+  color: var(--text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.supplier-tag-remove {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 1px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.supplier-tag-remove:hover {
+  color: var(--text-primary);
+}
+
+.supplier-clear-all {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px;
+  text-decoration: underline;
+}
+
+.supplier-clear-all:hover {
+  color: var(--text-primary);
 }
 
 .supplier-no-match {

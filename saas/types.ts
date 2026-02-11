@@ -90,8 +90,8 @@ export interface AppState {
   restored: boolean;
   /** Currently selected end product hash for subgraph/sankey */
   selectedProduct: string | null;
-  /** Currently selected supplier hash for impact view */
-  selectedSupplier: string | null;
+  /** Currently selected supplier hashes for impact view (multi-select) */
+  selectedSuppliers: Set<string>;
   /** Active stage filters (checked stages shown) */
   stageFilters: Set<string>;
   /** Active site filters */
