@@ -20,6 +20,13 @@ function getEffectiveTier(tier?: string): "Free" | "Light" | "Heavy" {
   return "Free";
 }
 
+/** Map internal tier keys to customer-facing pricing names. */
+const TIER_DISPLAY: Record<"Free" | "Light" | "Heavy", string> = {
+  Free: "Taste",
+  Light: "Scope",
+  Heavy: "Deliver",
+};
+
 export function ExportPanel() {
   const { data, keyData, selectedProduct, viewMode } = useScaffold();
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -98,7 +105,7 @@ export function ExportPanel() {
       <h3>Export</h3>
 
       <div className="export-tier-badge">
-        Tier: <span className={`tier-${tier.toLowerCase()}`}>{tier}</span>
+        Tier: <span className={`tier-${tier.toLowerCase()}`}>{TIER_DISPLAY[tier]}</span>
       </div>
 
       {/* L2-29: Rasterized PDF */}
@@ -109,11 +116,11 @@ export function ExportPanel() {
         title={
           canExportPdf
             ? "Export rasterized PDF (anti-OCR)"
-            : "Requires Light or Heavy tier"
+            : "Requires Scope or Deliver tier"
         }
       >
         {pdfLoading ? "Generating PDF..." : "Export PDF"}
-        {!canExportPdf && <span className="tier-lock">Light+</span>}
+        {!canExportPdf && <span className="tier-lock">Scope+</span>}
       </button>
 
       {/* L2-31: Editable PPT */}
@@ -124,11 +131,11 @@ export function ExportPanel() {
         title={
           canExportPpt
             ? "Export editable PowerPoint"
-            : "Requires Heavy tier"
+            : "Requires Deliver tier"
         }
       >
         {pptLoading ? "Generating PPT..." : "Export PPT"}
-        {!canExportPpt && <span className="tier-lock">Heavy</span>}
+        {!canExportPpt && <span className="tier-lock">Deliver</span>}
       </button>
 
       {error && <div className="export-error">{error}</div>}
