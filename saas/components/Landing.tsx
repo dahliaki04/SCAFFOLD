@@ -104,15 +104,6 @@ function CrossIcon() {
   );
 }
 
-function ArrowDownIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="12" y1="5" x2="12" y2="19" />
-      <polyline points="19 12 12 19 5 12" />
-    </svg>
-  );
-}
-
 function ArrowRightIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -192,10 +183,6 @@ export function Landing() {
     uploadRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const scrollToDemo = () => {
-    document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
-  };
-
   // L2-19: Handle baseline/target file loading for diff
   const handleDiffFile = useCallback(
     (file: File, slot: "baseline" | "target") => {
@@ -251,7 +238,6 @@ export function Landing() {
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
-            <a href="#demo">Demo</a>
             <a href="#compare">Compare</a>
             <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
               Guide
@@ -268,7 +254,7 @@ export function Landing() {
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <div className="landing-hero-badge">Supply Chain Structure Audit</div>
+          <div className="landing-hero-badge">Supply Chain Visibility</div>
           <h1>
             See the risk your
             <br />
@@ -282,9 +268,9 @@ export function Landing() {
             disruption hits the most lines. Runs entirely on your machine.
           </p>
           <div className="landing-hero-actions">
-            <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
-              Try Semiconductor Demo
-              <ArrowDownIcon />
+            <button className="btn btn-accent btn-lg" onClick={loadDemo} disabled={demoLoading}>
+              {demoLoading ? "Loading Demo..." : "Try Semiconductor Demo"}
+              <ArrowRightIcon />
             </button>
             <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
               Upload Your Data
@@ -304,7 +290,7 @@ export function Landing() {
             <div className="hero-stat-divider" />
             <div className="hero-stat">
               <span className="hero-stat-value">3 clicks</span>
-              <span className="hero-stat-label">Excel to audit report</span>
+              <span className="hero-stat-label">Excel to full picture</span>
             </div>
           </div>
         </div>
@@ -436,7 +422,7 @@ export function Landing() {
               </div>
               <h3>Works fully offline</h3>
               <p>
-                Local tool validates, audits, and generates reports with zero
+                Local tool validates, analyzes, and generates reports with zero
                 internet. The online viewer processes everything in your browser.
               </p>
             </div>
@@ -702,6 +688,12 @@ export function Landing() {
               Upload a baseline and target upload.json to see what changed —
               new parts, removed connections, shifted risk levels.
             </p>
+            <p className="compare-sample-hint">
+              No files yet? Try with our samples:{" "}
+              <a href="/diff_baseline.json" download="diff_baseline.json">baseline.json</a>
+              {" & "}
+              <a href="/diff_target.json" download="diff_target.json">target.json</a>
+            </p>
           </div>
 
           <div className="diff-upload-row">
@@ -809,7 +801,7 @@ export function Landing() {
           <div className="footer-brand">
             <span className="landing-logo">SCAFFOLD</span>
             <span className="footer-copy">
-              Supply chain structure audit.
+              Supply chain structure, visualized.
             </span>
           </div>
           <div className="footer-links">
