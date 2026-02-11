@@ -733,6 +733,28 @@ body {
   stroke-opacity: 0.6;
 }
 
+/* Header nav links (Home / Guide from viewer) */
+.header-nav-links {
+  display: flex;
+  gap: 4px;
+}
+
+.header-nav-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  padding: 3px 10px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.header-nav-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
 /* Stats bar */
 .stats-bar {
   display: flex;

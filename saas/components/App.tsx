@@ -20,14 +20,19 @@ import { NodeSizeToggle } from "./NodeSizeToggle";
 import { SupplierImpactView } from "./SupplierImpactView";
 import { ExportPanel } from "./ExportPanel";
 import { Landing } from "./Landing";
+import { LocalGuide } from "./LocalGuide";
 
 function AppContent() {
-  const { loaded, data, viewMode, restored } = useScaffold();
+  const { loaded, data, viewMode, restored, page } = useScaffold();
   const dispatch = useDispatch();
   const [panelOpen, setPanelOpen] = useState(false);
 
-  if (!loaded) {
+  if (page === "landing" || (page === "viewer" && !loaded)) {
     return <Landing />;
+  }
+
+  if (page === "guide") {
+    return <LocalGuide />;
   }
 
   const nodeCount = data ? Object.keys(data.nodes).length : 0;
@@ -38,6 +43,10 @@ function AppContent() {
       <header className="app-header">
         <span className="logo">SCAFFOLD</span>
         <span className="version">v3.0</span>
+        <div className="header-nav-links">
+          <button className="header-nav-btn" onClick={() => dispatch({ type: "SET_PAGE", payload: "landing" })}>Home</button>
+          <button className="header-nav-btn" onClick={() => dispatch({ type: "SET_PAGE", payload: "guide" })}>Guide</button>
+        </div>
 
         {/* View toggle */}
         <div className="view-toggle">
