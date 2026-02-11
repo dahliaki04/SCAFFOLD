@@ -6,7 +6,7 @@
  */
 
 import { useState, useCallback, useRef } from "react";
-import { useDispatch } from "../context/ScaffoldContext";
+import { useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { parseScaffoldJSON, ParseError } from "../lib/parser";
 
 /* ── SVG Icon Components ────────────────────────────────────────── */
@@ -124,6 +124,7 @@ function ArrowRightIcon() {
 /* ── Landing Page Component ─────────────────────────────────────── */
 
 export function Landing() {
+  const { loaded } = useScaffold();
   const dispatch = useDispatch();
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
@@ -194,9 +195,14 @@ export function Landing() {
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
             <a href="#demo">Demo</a>
-            <button className="btn btn-accent btn-sm" onClick={scrollToDemo}>
-              Try Demo
-            </button>
+            <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
+              Guide
+            </a>
+            {loaded && (
+              <button className="btn btn-accent btn-sm" onClick={() => dispatch({ type: "SET_PAGE", payload: "viewer" })}>
+                Open Viewer
+              </button>
+            )}
           </div>
         </div>
       </nav>
@@ -595,14 +601,6 @@ export function Landing() {
               server — everything runs in your browser and is gone when
               you close the tab.
             </p>
-          </div>
-
-          {/* Quick demo link */}
-          <div className="demo-quick">
-            <span>No data yet?</span>
-            <button className="btn btn-sm btn-accent" onClick={loadDemo} disabled={demoLoading}>
-              {demoLoading ? "Loading..." : "Load Semiconductor Demo"}
-            </button>
           </div>
 
           <div

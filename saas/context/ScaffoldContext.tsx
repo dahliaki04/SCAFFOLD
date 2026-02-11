@@ -15,6 +15,8 @@ import {
 import type { ScaffoldJSON, KeyScafData } from "../types";
 import { extractStages, extractSites, getMaxDepth } from "../lib/parser";
 
+export type Page = "landing" | "guide" | "viewer";
+
 interface State {
   data: ScaffoldJSON | null;
   loaded: boolean;
@@ -31,6 +33,7 @@ interface State {
   stages: string[];
   sites: string[];
   nodeSizing: boolean;
+  page: Page;
 }
 
 type Action =
@@ -47,6 +50,7 @@ type Action =
   | { type: "SET_SEARCH"; payload: string }
   | { type: "SET_VIEW"; payload: "graph" | "sankey" }
   | { type: "TOGGLE_NODE_SIZING" }
+  | { type: "SET_PAGE"; payload: Page }
   | { type: "RESET" };
 
 const initialState: State = {
@@ -65,6 +69,7 @@ const initialState: State = {
   stages: [],
   sites: [],
   nodeSizing: true,
+  page: "landing",
 };
 
 function reducer(state: State, action: Action): State {
@@ -86,6 +91,7 @@ function reducer(state: State, action: Action): State {
         depthFilter: maxDepth,
         selectedProduct: null,
         searchQuery: "",
+        page: "viewer",
       };
     }
     case "RESTORE_KEY":
@@ -134,6 +140,8 @@ function reducer(state: State, action: Action): State {
       return { ...state, viewMode: action.payload };
     case "TOGGLE_NODE_SIZING":
       return { ...state, nodeSizing: !state.nodeSizing };
+    case "SET_PAGE":
+      return { ...state, page: action.payload };
     case "RESET":
       return initialState;
     default:
