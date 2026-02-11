@@ -281,6 +281,22 @@
   line-height: 1.6;
 }
 
+.compare-sample-hint {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+.compare-sample-hint a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.compare-sample-hint a:hover {
+  color: var(--accent-hover, #6ea8fe);
+}
+
 /* ── Features Grid ───────────────────────────────────── */
 
 .features-grid {
