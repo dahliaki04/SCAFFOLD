@@ -21,7 +21,7 @@ interface State {
   keyData: KeyScafData | null;
   restored: boolean;
   selectedProduct: string | null;
-  selectedSupplier: string | null;
+  selectedSuppliers: Set<string>;
   stageFilters: Set<string>;
   siteFilters: Set<string>;
   depthFilter: number;
@@ -37,7 +37,8 @@ type Action =
   | { type: "LOAD_DATA"; payload: ScaffoldJSON }
   | { type: "RESTORE_KEY"; payload: KeyScafData }
   | { type: "SELECT_PRODUCT"; payload: string | null }
-  | { type: "SELECT_SUPPLIER"; payload: string | null }
+  | { type: "TOGGLE_SUPPLIER"; payload: string }
+  | { type: "CLEAR_SUPPLIERS" }
   | { type: "TOGGLE_STAGE"; payload: string }
   | { type: "SET_ALL_STAGES"; payload: boolean }
   | { type: "TOGGLE_SITE"; payload: string }
@@ -54,7 +55,7 @@ const initialState: State = {
   keyData: null,
   restored: false,
   selectedProduct: null,
-  selectedSupplier: null,
+  selectedSuppliers: new Set(),
   stageFilters: new Set(),
   siteFilters: new Set(),
   depthFilter: Infinity,
@@ -90,9 +91,15 @@ function reducer(state: State, action: Action): State {
     case "RESTORE_KEY":
       return { ...state, keyData: action.payload, restored: true };
     case "SELECT_PRODUCT":
-      return { ...state, selectedProduct: action.payload, selectedSupplier: null };
-    case "SELECT_SUPPLIER":
-      return { ...state, selectedSupplier: action.payload, selectedProduct: null };
+      return { ...state, selectedProduct: action.payload, selectedSuppliers: new Set() };
+    case "TOGGLE_SUPPLIER": {
+      const next = new Set(state.selectedSuppliers);
+      if (next.has(action.payload)) next.delete(action.payload);
+      else next.add(action.payload);
+      return { ...state, selectedSuppliers: next, selectedProduct: null };
+    }
+    case "CLEAR_SUPPLIERS":
+      return { ...state, selectedSuppliers: new Set() };
     case "TOGGLE_STAGE": {
       const next = new Set(state.stageFilters);
       if (next.has(action.payload)) next.delete(action.payload);

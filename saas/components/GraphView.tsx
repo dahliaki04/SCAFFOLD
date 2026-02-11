@@ -24,7 +24,7 @@ export function GraphView() {
     siteFilters,
     depthFilter,
     selectedProduct,
-    selectedSupplier,
+    selectedSuppliers,
     searchQuery,
     keyData,
     nodeSizing,
@@ -219,13 +219,21 @@ export function GraphView() {
     if (!sigma) return;
 
     // Supplier highlight takes priority when active
-    if (selectedSupplier && data?.suppliers?.[selectedSupplier]) {
-      const supInfo = data.suppliers[selectedSupplier];
-      const suppliedSet = new Set(supInfo.supplied_nodes);
-      const affectedSet = new Set(supInfo.affected_products);
+    if (selectedSuppliers.size > 0 && data?.suppliers) {
+      const suppliedSet = new Set<string>();
+      const affectedSet = new Set<string>();
+      const allGraphSupplied: string[] = [];
+      for (const supHash of selectedSuppliers) {
+        const supInfo = data.suppliers[supHash];
+        if (!supInfo) continue;
+        supInfo.supplied_nodes.forEach((n) => suppliedSet.add(n));
+        supInfo.affected_products.forEach((n) => affectedSet.add(n));
+        supInfo.supplied_nodes.forEach((n) => {
+          if (graph.hasNode(n)) allGraphSupplied.push(n);
+        });
+      }
       // BFS upstream from every supplied node to find the full impact chain
-      const graphSupplied = supInfo.supplied_nodes.filter((n) => graph.hasNode(n));
-      const chain = getUpstreamChain(graphSupplied);
+      const chain = getUpstreamChain(allGraphSupplied);
 
       sigma.setSetting("nodeReducer", (node, attrs) => {
         if (suppliedSet.has(node)) {
@@ -299,7 +307,7 @@ export function GraphView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, selectedNode, selectedSupplier, data, graph, getFullChain, getUpstreamChain, patternPeers]);
+  }, [hoveredNode, selectedNode, selectedSuppliers, data, graph, getFullChain, getUpstreamChain, patternPeers]);
 
   // Highlight searched node
   useEffect(() => {

@@ -1,17 +1,17 @@
 /**
- * Supplier Selection Panel — L1-14 visualization in SaaS.
+ * Supplier Search & Multi-Select Panel — L1-14 visualization in SaaS.
  *
- * Always-visible sidebar section listing suppliers from upload.json.
- * Sorted by impact count (desc). Selecting a supplier highlights:
- *   1. supplied_nodes — the exact (part, site) graph nodes this supplier feeds
+ * Search bar with dropdown results for selecting multiple suppliers.
+ * Selected suppliers shown as removable tags. Graph highlights the union
+ * of all selected suppliers' impact:
+ *   1. supplied_nodes — nodes these suppliers feed
  *   2. affected_products — end products reachable via backward trace
  *   3. the full upstream chain between them (computed in GraphView)
  *
- * Includes search filter for large supplier lists.
  * After key.scaf restore: shows real supplier names instead of hashes.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useScaffold, useDispatch } from "../context/ScaffoldContext";
 
 interface SupplierInfo {
@@ -24,9 +24,22 @@ interface SupplierInfo {
 }
 
 export function SupplierImpactView() {
-  const { data, selectedSupplier, keyData } = useScaffold();
+  const { data, selectedSuppliers, keyData } = useScaffold();
   const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const suppliers = useMemo(() => {
     if (!data?.suppliers) return [];
@@ -49,7 +62,7 @@ export function SupplierImpactView() {
     return list;
   }, [data, keyData]);
 
-  // Filter suppliers by search term
+  // Filter suppliers by search term for the dropdown
   const filteredSuppliers = useMemo(() => {
     if (!searchTerm) return suppliers;
     const q = searchTerm.toLowerCase();
@@ -74,10 +87,29 @@ export function SupplierImpactView() {
     return map;
   }, [data, keyData]);
 
-  // Detail panel for the selected supplier
-  const selectedInfo = selectedSupplier
-    ? suppliers.find((s) => s.hash === selectedSupplier)
-    : null;
+  // Aggregate detail info for all selected suppliers
+  const selectedDetails = useMemo(() => {
+    if (selectedSuppliers.size === 0) return null;
+    const suppliedNodes = new Set<string>();
+    const affectedProducts = new Set<string>();
+    for (const hash of selectedSuppliers) {
+      const sup = suppliers.find((s) => s.hash === hash);
+      if (sup) {
+        sup.suppliedNodes.forEach((n) => suppliedNodes.add(n));
+        sup.affectedProducts.forEach((n) => affectedProducts.add(n));
+      }
+    }
+    return {
+      suppliedNodes: Array.from(suppliedNodes),
+      affectedProducts: Array.from(affectedProducts),
+    };
+  }, [selectedSuppliers, suppliers]);
+
+  // Selected supplier objects for tags display
+  const selectedList = useMemo(
+    () => suppliers.filter((s) => selectedSuppliers.has(s.hash)),
+    [suppliers, selectedSuppliers],
+  );
 
   const hasSuppliers = suppliers.length > 0;
 
@@ -96,61 +128,86 @@ export function SupplierImpactView() {
         </div>
       ) : (
         <>
-          {/* Search filter — show when more than 5 suppliers */}
-          {suppliers.length > 5 && (
+          {/* Search bar with dropdown multi-select */}
+          <div className="supplier-multiselect" ref={wrapperRef}>
             <div className="supplier-search">
               <input
                 type="text"
-                placeholder="Filter suppliers..."
+                placeholder="Search suppliers..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setDropdownOpen(true);
+                }}
+                onFocus={() => setDropdownOpen(true)}
               />
             </div>
-          )}
 
-          <div className="product-list">
-            {/* Clear selection */}
-            <div
-              className={`product-item ${selectedSupplier === null ? "selected" : ""}`}
-              onClick={() =>
-                dispatch({ type: "SELECT_SUPPLIER", payload: null })
-              }
-            >
-              All Suppliers
-            </div>
-
-            {filteredSuppliers.map((sup) => (
-              <div
-                key={sup.hash}
-                className={`product-item ${selectedSupplier === sup.hash ? "selected" : ""}`}
-                onClick={() =>
-                  dispatch({
-                    type: "SELECT_SUPPLIER",
-                    payload:
-                      selectedSupplier === sup.hash ? null : sup.hash,
-                  })
-                }
-              >
-                <span>{sup.label}</span>
-                <span className="badge">
-                  {sup.impactCount} products · {sup.suppliedCount} nodes
-                </span>
-              </div>
-            ))}
-
-            {searchTerm && filteredSuppliers.length === 0 && (
-              <div className="supplier-no-match">
-                No suppliers match "{searchTerm}"
+            {/* Dropdown results */}
+            {dropdownOpen && (
+              <div className="supplier-dropdown">
+                {filteredSuppliers.length === 0 ? (
+                  <div className="supplier-no-match">
+                    No suppliers match &ldquo;{searchTerm}&rdquo;
+                  </div>
+                ) : (
+                  filteredSuppliers.map((sup) => (
+                    <label
+                      key={sup.hash}
+                      className={`supplier-dropdown-item ${selectedSuppliers.has(sup.hash) ? "checked" : ""}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedSuppliers.has(sup.hash)}
+                        onChange={() =>
+                          dispatch({ type: "TOGGLE_SUPPLIER", payload: sup.hash })
+                        }
+                      />
+                      <span className="supplier-dropdown-label">{sup.label}</span>
+                      <span className="badge">
+                        {sup.impactCount} products · {sup.suppliedCount} nodes
+                      </span>
+                    </label>
+                  ))
+                )}
               </div>
             )}
           </div>
 
-          {/* Detail panel when a supplier is selected */}
-          {selectedInfo && (
+          {/* Selected supplier tags */}
+          {selectedList.length > 0 && (
+            <div className="supplier-tags">
+              {selectedList.map((sup) => (
+                <span key={sup.hash} className="supplier-tag">
+                  {sup.label}
+                  <button
+                    className="supplier-tag-remove"
+                    onClick={() =>
+                      dispatch({ type: "TOGGLE_SUPPLIER", payload: sup.hash })
+                    }
+                    aria-label={`Remove ${sup.label}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              {selectedList.length > 1 && (
+                <button
+                  className="supplier-clear-all"
+                  onClick={() => dispatch({ type: "CLEAR_SUPPLIERS" })}
+                >
+                  Clear all
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Detail panel for selected suppliers */}
+          {selectedDetails && (
             <div className="supplier-detail">
-              <h4>Supplied Nodes</h4>
+              <h4>Supplied Nodes ({selectedDetails.suppliedNodes.length})</h4>
               <div className="supplier-detail-list">
-                {selectedInfo.suppliedNodes.map((nodeId) => (
+                {selectedDetails.suppliedNodes.map((nodeId) => (
                   <div
                     key={nodeId}
                     className="supplier-detail-item supplied"
@@ -159,9 +216,9 @@ export function SupplierImpactView() {
                   </div>
                 ))}
               </div>
-              <h4>Affected End Products</h4>
+              <h4>Affected End Products ({selectedDetails.affectedProducts.length})</h4>
               <div className="supplier-detail-list">
-                {selectedInfo.affectedProducts.map((nodeId) => (
+                {selectedDetails.affectedProducts.map((nodeId) => (
                   <div
                     key={nodeId}
                     className="supplier-detail-item affected"
