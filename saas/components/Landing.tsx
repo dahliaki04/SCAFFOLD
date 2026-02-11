@@ -190,15 +190,12 @@ export function Landing() {
         <div className="landing-nav-inner">
           <span className="landing-logo">SCAFFOLD</span>
           <div className="landing-nav-links">
-            <a href="#demo">Demo</a>
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
+            <a href="#demo">Demo</a>
             <button className="btn btn-accent btn-sm" onClick={scrollToDemo}>
               Try Demo
-            </button>
-            <button className="btn btn-primary btn-sm" onClick={scrollToUpload}>
-              Open Viewer
             </button>
           </div>
         </div>
@@ -207,20 +204,18 @@ export function Landing() {
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <div className="landing-hero-badge">Your BOM Analysis Buddy</div>
+          <div className="landing-hero-badge">Supply Chain Structure Audit</div>
           <h1>
             See the risk your
             <br />
             <span className="hero-accent">BOM hides</span>
           </h1>
           <p className="landing-hero-sub">
-            Map your product structure and visualize where lead time
-            accumulates across every part and stage — see which components
-            carry the most weight in your chain. Built for planners who
-            need visibility into what slows things down, and consultants
-            who need to present it. The local tool works fully offline.
-            This viewer runs entirely in your browser — your data never
-            leaves your machine.
+            Orphan parts, circular refs, broken links — small BOM errors
+            that take hours to find and seconds to fix. SCAFFOLD catches
+            them instantly, then visualizes your supply network so you see
+            how products cluster, where suppliers overlap, and which
+            disruption hits the most lines. Runs entirely on your machine.
           </p>
           <div className="landing-hero-actions">
             <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
@@ -234,18 +229,18 @@ export function Landing() {
           </div>
           <div className="landing-hero-stats">
             <div className="hero-stat">
-              <span className="hero-stat-value">100%</span>
-              <span className="hero-stat-label">free offline tool</span>
+              <span className="hero-stat-value">250k+</span>
+              <span className="hero-stat-label">rows in under 15s</span>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat">
-              <span className="hero-stat-value">0</span>
-              <span className="hero-stat-label">data sent to server</span>
+              <span className="hero-stat-value">Zero upload</span>
+              <span className="hero-stat-label">runs on your machine</span>
             </div>
             <div className="hero-stat-divider" />
             <div className="hero-stat">
-              <span className="hero-stat-value">Browser only</span>
-              <span className="hero-stat-label">all processing local</span>
+              <span className="hero-stat-value">3 clicks</span>
+              <span className="hero-stat-label">Excel to audit report</span>
             </div>
           </div>
         </div>
@@ -310,13 +305,88 @@ export function Landing() {
         </div>
       </section>
 
+      {/* ── Features ───────────────────────────────────── */}
+      <section className="landing-section section-alt" id="features">
+        <div className="landing-section-inner">
+          <div className="section-header">
+            <h2>Built for the people behind the BOM</h2>
+            <p>
+              Find structural errors, visualize supplier impact, and present
+              findings — without exposing your customer's proprietary data.
+            </p>
+          </div>
+          <div className="features-grid">
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#EA4335" }}>
+                <AlertIcon />
+              </div>
+              <h3>Catch errors before modeling</h3>
+              <p>
+                Orphan parts, circular references, missing links, bad sums —
+                flagged instantly so you fix in minutes, not days.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#4285F4" }}>
+                <GraphIcon />
+              </div>
+              <h3>See the full network</h3>
+              <p>
+                Interactive graph colored by stage, sized by lead time. Click
+                any product to isolate its subgraph.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#F59E0B" }}>
+                <FlowIcon />
+              </div>
+              <h3>Trace every path</h3>
+              <p>
+                Sankey flow from finished good to raw material. See where
+                paths converge, where suppliers overlap, where risk stacks.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#9333EA" }}>
+                <LayersIcon />
+              </div>
+              <h3>Measure supplier impact</h3>
+              <p>
+                Pick any supplier — see every product line affected. Single-source
+                parts and site dependencies surfaced automatically.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#34A853" }}>
+                <ShieldIcon />
+              </div>
+              <h3>Safe for customer data</h3>
+              <p>
+                Names hashed, values jittered, stages masked. Analyze your
+                customer's BOM without exposing a single business term.
+              </p>
+            </div>
+            <div className="feature-card">
+              <div className="feature-icon" style={{ color: "#06B6D4" }}>
+                <LockIcon />
+              </div>
+              <h3>Works fully offline</h3>
+              <p>
+                Local tool validates, audits, and generates reports with zero
+                internet. The online viewer processes everything in your browser.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Demo Section ────────────────────────────────── */}
-      <section className="landing-section section-alt" id="demo">
+      <section className="landing-section" id="demo">
         <div className="landing-section-inner">
           <div className="demo-showcase">
             <div className="demo-showcase-content">
               <div className="demo-showcase-badge">Live Demo</div>
-              <h2>See SCAFFOLD in action</h2>
+              <h2>See it yourself</h2>
               <p>
                 Explore a semiconductor BOM with 65 parts across 8 global sites
                 and 6 process stages — from wafer fabrication through to distribution.
@@ -353,87 +423,12 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Features ───────────────────────────────────── */}
-      <section className="landing-section" id="features">
-        <div className="landing-section-inner">
-          <div className="section-header">
-            <h2>Built for the people behind the BOM</h2>
-            <p>
-              Analyze your customer's BOM structure, identify patterns and
-              present findings — without ever exposing their proprietary data.
-            </p>
-          </div>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#4285F4" }}>
-                <GraphIcon />
-              </div>
-              <h3>Interactive BOM Graph</h3>
-              <p>
-                Stage-colored nodes, risk-based sizing, hover highlighting,
-                and per-product subgraph views. See your full structure at a glance.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#F59E0B" }}>
-                <FlowIcon />
-              </div>
-              <h3>Sankey Flow Diagrams</h3>
-              <p>
-                Multi-hop flow visualization. Select a finished good and trace
-                every path through your supply chain.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#EA4335" }}>
-                <AlertIcon />
-              </div>
-              <h3>Risk Detection</h3>
-              <p>
-                Single-source alerts, max lead-time bottlenecks, supplier impact
-                analysis, and site dependency mapping — all automated.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#34A853" }}>
-                <ShieldIcon />
-              </div>
-              <h3>Privacy by Design</h3>
-              <p>
-                Names are hashed, values are jittered, stages are masked. Your
-                customer's real data never leaves the local machine.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#9333EA" }}>
-                <LockIcon />
-              </div>
-              <h3>Client-side Decrypt</h3>
-              <p>
-                Restore real labels in the browser with key.scaf. Decryption
-                happens entirely client-side — zero network calls.
-              </p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon" style={{ color: "#06B6D4" }}>
-                <LayersIcon />
-              </div>
-              <h3>Offline-first Local Tool</h3>
-              <p>
-                Validate Excel BOMs, generate PDF and PPT reports, and produce
-                standalone deliverables — no internet required.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ── How It Works ───────────────────────────────── */}
       <section className="landing-section section-alt" id="how-it-works">
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>How SCAFFOLD works</h2>
-            <p>Two-segment disconnected architecture. Privacy by design.</p>
+            <h2>How it works</h2>
+            <p>Local tool processes your data. Online viewer shows the result. Nothing crosses unless you choose.</p>
           </div>
           <div className="steps-flow">
             <div className="step-card">
@@ -449,10 +444,10 @@ export function Landing() {
             </div>
             <div className="step-card">
               <div className="step-number">2</div>
-              <h3>Analyze & Mask</h3>
+              <h3>Validate & Analyze</h3>
               <p>
-                Risk engine computes lead times, detects single-source parts,
-                runs impact analysis. All names are hashed, values jittered.
+                Structural errors flagged, lead times computed, supplier impact
+                mapped. Names are hashed and values masked automatically.
               </p>
             </div>
             <div className="step-arrow">
@@ -480,12 +475,12 @@ export function Landing() {
           </div>
           <div className="architecture-diagram">
             <div className="arch-segment arch-local">
-              <div className="arch-label">Local Tool (Python)</div>
+              <div className="arch-label">Local Tool</div>
               <div className="arch-items">
                 <span>Excel Input</span>
                 <span>Validation</span>
-                <span>Risk Engine</span>
-                <span>Dual Ledger</span>
+                <span>Risk Analysis</span>
+                <span>Masking</span>
               </div>
               <div className="arch-outputs">
                 <span className="arch-file">upload.json</span>
@@ -498,7 +493,7 @@ export function Landing() {
               <div className="arch-gap-line" />
             </div>
             <div className="arch-segment arch-saas">
-              <div className="arch-label">SaaS Viewer (React)</div>
+              <div className="arch-label">Online Viewer</div>
               <div className="arch-items">
                 <span>Graph View</span>
                 <span>Sankey Flow</span>
@@ -594,11 +589,11 @@ export function Landing() {
       <section className="landing-section section-alt" id="upload" ref={uploadRef}>
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Ready to explore?</h2>
+            <h2>Ready to try it?</h2>
             <p>
-              Drop your upload.json below to launch the interactive viewer.
-              No account needed. No server upload. Everything runs in your
-              browser's memory and is gone when you close the tab.
+              Drop your upload.json to launch the viewer. No account, no
+              server — everything runs in your browser and is gone when
+              you close the tab.
             </p>
           </div>
 
@@ -648,7 +643,7 @@ export function Landing() {
           <div className="footer-brand">
             <span className="landing-logo">SCAFFOLD</span>
             <span className="footer-copy">
-              Your BOM analysis buddy.
+              Supply chain structure audit.
             </span>
           </div>
           <div className="footer-links">
