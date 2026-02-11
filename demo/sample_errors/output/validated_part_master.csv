@@ -1,0 +1,19 @@
+PartNumber,Site,Stage,IsEndProduct,_SCAFFOLD_Error
+FG-MOTOR,PLANT-A,Assembly,True,
+FG-MOTOR,DC-WEST,Distribution,True,
+FG-PUMP,PLANT-B,Assembly,True,
+HOUSING,PLANT-A,Machining,False,
+HOUSING,PLANT-B,Machining,False,
+SHAFT,PLANT-A,Machining,False,
+BEARING,PLANT-A,Assembly,False,
+SEAL-KIT,PLANT-A,Assembly,False,
+ROTOR,PLANT-A,Machining,False,
+STATOR,PLANT-A,Machining,False,
+IMPELLER,PLANT-B,Machining,False,
+VOLUTE,PLANT-B,Casting,False,
+,PLANT-A,Machining,False,Blank PartNumber
+BOLT-SET,PLANT-A,Fastening,False,
+WIRE-COIL,,Winding,False,Blank Site
+GASKET,PLANT-B,Sealing,False,
+FLANGE,PLANT-B,Casting,False,
+ORPHAN-PART,PLANT-C,Warehouse,False,

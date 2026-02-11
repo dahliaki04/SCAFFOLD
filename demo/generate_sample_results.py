@@ -259,12 +259,32 @@ def main() -> None:
         },
     }
 
+    # ── 6. Write annotated output CSVs (simulates validated.xlsx) ──
+    print("\n--- Writing annotated output CSVs ---")
+    output_dir = out_dir / "output"
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    tab_filenames = {
+        "Part Master": "validated_part_master.csv",
+        "BOM Structure": "validated_bom_structure.csv",
+        "Supplier Map": "validated_supplier_map.csv",
+    }
+    for tab_name, df in annotated.items():
+        fname = tab_filenames[tab_name]
+        fpath = output_dir / fname
+        df.to_csv(fpath, index=False)
+        err_count = (df["_SCAFFOLD_Error"].astype(str).str.strip() != "").sum()
+        print(f"  {fname}: {len(df)} rows, {err_count} with errors")
+
     # ── Write results ─────────────────────────────────────
     output_path = out_dir / "sample_results.json"
     output_path.write_text(
         json.dumps(results, indent=2, default=str, ensure_ascii=False)
     )
-    print(f"\n=== Sample results written: {output_path} ===")
+    print(f"\n=== Sample results written ===")
+    print(f"    {output_path}")
+    for fname in tab_filenames.values():
+        print(f"    {output_dir / fname}")
     print(f"    Total issues found: {results['error_summary']['total_issues']}")
 
 

@@ -497,6 +497,63 @@ export function LocalGuide() {
           <div className="guide-note">
             All filenames include a timestamp (e.g. <code>validated_20260209_143000.xlsx</code>) so previous outputs are never overwritten.
           </div>
+
+          <div className="guide-card">
+            <h3>Sample Output Files</h3>
+            <p>
+              See what the tool actually produces. These files were generated from the demo data sets.
+            </p>
+            <div className="guide-sample-links">
+              <div className="guide-sample-group">
+                <h4>Clean Data Outputs</h4>
+                <p className="guide-sample-desc">
+                  Generated from the semiconductor demo (72 parts, zero errors).
+                </p>
+                <ul>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/upload.json" target="_blank" rel="noopener noreferrer">
+                      upload.json
+                    </a> — masked graph with SHA-256 hashed names, jittered values, and S1/S2/S3 stages
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/key.scaf" target="_blank" rel="noopener noreferrer">
+                      key.scaf
+                    </a> — encrypted restore key (password: <code>scaffold-demo</code>)
+                  </li>
+                </ul>
+              </div>
+              <div className="guide-sample-group">
+                <h4>Error Data Outputs</h4>
+                <p className="guide-sample-desc">
+                  Generated from the error demo data. Each CSV includes a <code>_SCAFFOLD_Error</code> column
+                  showing exactly what the tool flags — this is what <code>validated.xlsx</code> looks like
+                  when your data has issues.
+                </p>
+                <ul>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/output/validated_part_master.csv" target="_blank" rel="noopener noreferrer">
+                      validated_part_master.csv
+                    </a> — flags blank PartNumber and blank Site rows
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/output/validated_bom_structure.csv" target="_blank" rel="noopener noreferrer">
+                      validated_bom_structure.csv
+                    </a> — flags Qty &le; 0, blank references, SubGroup sum errors, missing UsageShare
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/output/validated_supplier_map.csv" target="_blank" rel="noopener noreferrer">
+                      validated_supplier_map.csv
+                    </a> — flags LeadTime &le; 0
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/sample_results.json" target="_blank" rel="noopener noreferrer">
+                      sample_results.json
+                    </a> — full validation report: 36 issues including cycles, orphans, and risk warnings
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* ── 6. Uploading to the Viewer ──────────────── */}
