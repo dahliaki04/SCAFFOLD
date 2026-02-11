@@ -1,0 +1,48 @@
+{
+  "title": "SCAFFOLD Structure Audit Report",
+  "generated": "2026-02-11T13:25:20.684302",
+  "summary": {
+    "nodes": 70,
+    "edges": 80,
+    "sites": [
+      "BUMP-TW",
+      "DC-EU",
+      "DC-US",
+      "FAB-TW",
+      "FAB-US",
+      "FT-SG",
+      "OSAT-CN",
+      "OSAT-MY"
+    ],
+    "site_count": 8,
+    "end_products": 6,
+    "depths": {
+      "MOD-WIFI-6@DC-US": 4,
+      "IC-28NM-IOT@DC-EU": 7,
+      "IC-28NM-MCU@DC-EU": 7,
+      "IC-7NM-SOC@DC-US": 9,
+      "MOD-5G-RF@DC-US": 4,
+      "IC-7NM-GPU@DC-US": 9
+    },
+    "max_depth": 9,
+    "patterns": 3,
+    "leaves": 36,
+    "roots": 6,
+    "transfer_edges": 18,
+    "single_source_parts": 14,
+    "highest_lt_part": "DIE-RF-BOUGHT",
+    "highest_lt_value": 60
+  },
+  "validation_errors": {
+    "Part Master": "0",
+    "BOM Structure": "0",
+    "Supplier Map": "0"
+  },
+  "total_errors": "0",
+  "findings": [
+    "All input data passed validation with zero errors.",
+    "14 part(s) have only one supplier (single source risk).",
+    "18 inter-site transfer edge(s) detected in BOM.",
+    "Deepest BOM path: 9 levels."
+  ]
+}

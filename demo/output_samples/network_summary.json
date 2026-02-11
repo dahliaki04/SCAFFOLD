@@ -1,0 +1,32 @@
+{
+  "nodes": 70,
+  "edges": 80,
+  "sites": [
+    "BUMP-TW",
+    "DC-EU",
+    "DC-US",
+    "FAB-TW",
+    "FAB-US",
+    "FT-SG",
+    "OSAT-CN",
+    "OSAT-MY"
+  ],
+  "site_count": 8,
+  "end_products": 6,
+  "depths": {
+    "MOD-WIFI-6@DC-US": 4,
+    "IC-28NM-IOT@DC-EU": 7,
+    "IC-28NM-MCU@DC-EU": 7,
+    "IC-7NM-SOC@DC-US": 9,
+    "MOD-5G-RF@DC-US": 4,
+    "IC-7NM-GPU@DC-US": 9
+  },
+  "max_depth": 9,
+  "patterns": 3,
+  "leaves": 36,
+  "roots": 6,
+  "transfer_edges": 18,
+  "single_source_parts": 14,
+  "highest_lt_part": "DIE-RF-BOUGHT",
+  "highest_lt_value": 60
+}
