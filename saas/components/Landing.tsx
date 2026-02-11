@@ -214,13 +214,10 @@ export function Landing() {
             <span className="hero-accent">BOM hides</span>
           </h1>
           <p className="landing-hero-sub">
-            Map your product structure and visualize where lead time
-            accumulates across every part and stage — see which components
-            carry the most weight in your chain. Built for planners who
-            need visibility into what slows things down, and consultants
-            who need to present it. The local tool works fully offline.
-            This viewer runs entirely in your browser — your data never
-            leaves your machine.
+            Every supply chain breaks at its weakest link. SCAFFOLD finds
+            it — single-source parts, lead time bottlenecks, hidden
+            structural risk — all from your BOM topology. Nothing leaves
+            your machine.
           </p>
           <div className="landing-hero-actions">
             <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
