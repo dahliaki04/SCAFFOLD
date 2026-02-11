@@ -328,3 +328,151 @@ def generate_audit_report_data(
         "total_errors": total_errors,
         "findings": findings,
     }
+
+
+def render_audit_report_pdf(
+    report_data: dict,
+    output_path: Path,
+) -> Path:
+    """Render the audit report data to PDF using ReportLab (L1-27).
+
+    Creates a standalone PDF with:
+    * Title page with generation timestamp
+    * Network summary statistics table
+    * Validation error summary
+    * Key findings list
+
+    Returns the path to the written PDF file.
+    """
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from reportlab.platypus import (
+        SimpleDocTemplate,
+        Paragraph,
+        Spacer,
+        Table,
+        TableStyle,
+    )
+
+    doc = SimpleDocTemplate(
+        str(output_path),
+        pagesize=A4,
+        topMargin=25 * mm,
+        bottomMargin=25 * mm,
+        leftMargin=20 * mm,
+        rightMargin=20 * mm,
+    )
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "SCTitle",
+        parent=styles["Title"],
+        fontSize=22,
+        spaceAfter=12,
+    )
+    heading_style = ParagraphStyle(
+        "SCHeading",
+        parent=styles["Heading2"],
+        fontSize=14,
+        spaceBefore=18,
+        spaceAfter=8,
+    )
+    body_style = styles["BodyText"]
+
+    elements = []
+
+    # ── Title ─────────────────────────────────────────────
+    elements.append(Paragraph(report_data["title"], title_style))
+    elements.append(Paragraph(
+        f"Generated: {report_data['generated']}",
+        body_style,
+    ))
+    elements.append(Spacer(1, 12))
+
+    # ── Network Summary ───────────────────────────────────
+    elements.append(Paragraph("Network Summary", heading_style))
+    summary = report_data["summary"]
+    summary_rows = [["Metric", "Value"]]
+    display_keys = [
+        ("nodes", "Total Nodes"),
+        ("edges", "Total Edges"),
+        ("end_products", "End Products"),
+        ("site_count", "Sites"),
+        ("max_depth", "Max BOM Depth"),
+        ("patterns", "Unique Patterns"),
+        ("leaves", "Leaf Nodes (Buy)"),
+        ("roots", "Root Nodes"),
+        ("transfer_edges", "Transfer Edges"),
+        ("single_source_parts", "Single Source Parts"),
+        ("highest_lt_part", "Highest Lead Time Part"),
+        ("highest_lt_value", "Highest Lead Time (days)"),
+    ]
+    for key, label in display_keys:
+        val = summary.get(key, "N/A")
+        if isinstance(val, list):
+            val = ", ".join(str(v) for v in val)
+        summary_rows.append([label, str(val)])
+
+    table = Table(summary_rows, colWidths=[150, 300])
+    table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 10),
+        ("ALIGN", (0, 0), (-1, -1), "LEFT"),
+        ("FONTSIZE", (0, 1), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1),
+         [colors.white, colors.HexColor("#ecf0f1")]),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(table)
+    elements.append(Spacer(1, 12))
+
+    # ── Validation Errors ─────────────────────────────────
+    elements.append(Paragraph("Validation Summary", heading_style))
+    error_rows = [["Tab", "Errors"]]
+    for tab, count in report_data["validation_errors"].items():
+        error_rows.append([tab, str(count)])
+    error_rows.append(["Total", str(report_data["total_errors"])])
+
+    err_table = Table(error_rows, colWidths=[200, 100])
+    err_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2c3e50")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 9),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#bdc3c7")),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(err_table)
+    elements.append(Spacer(1, 12))
+
+    # ── Key Findings ──────────────────────────────────────
+    elements.append(Paragraph("Key Findings", heading_style))
+    for finding in report_data["findings"]:
+        elements.append(Paragraph(f"\u2022 {finding}", body_style))
+        elements.append(Spacer(1, 4))
+
+    # ── Footer ────────────────────────────────────────────
+    elements.append(Spacer(1, 24))
+    footer_style = ParagraphStyle(
+        "SCFooter",
+        parent=body_style,
+        fontSize=8,
+        textColor=colors.grey,
+    )
+    elements.append(Paragraph(
+        "SCAFFOLD v3.0 — Supply Chain Structure Audit. "
+        "This report was generated offline. No data was transmitted.",
+        footer_style,
+    ))
+
+    doc.build(elements)
+    return output_path

@@ -72,3 +72,7 @@ def end_products(part_master_df: pd.DataFrame) -> set:
 def part_master_nodes(part_master_df: pd.DataFrame) -> set:
     """Set of all (PartNumber, Site) tuples from Part Master."""
     return set(zip(part_master_df["PartNumber"], part_master_df["Site"]))
+
+
+# Alias for export plugin tests that expect 'bom_df' directly
+# (already defined above as a session fixture, no extra alias needed)

@@ -17,9 +17,12 @@ orjson==3.11.7            # NOT stdlib json — 1M records < 3 sec
 # GUI
 ttkbootstrap==1.10.1      # Modern ttk themes (dark mode: darkly/cyborg/solar); replaces unmaintained customtkinter
 
-# Encryption
-cryptography==46.0.4      # AES-256 (key.scaf) + RSA (PPT license)
+# Encryption + Licensing
+cryptography==46.0.4      # Fernet (AES-128-CBC) for key.scaf + RSA for license verification
                           # NOTE: Fernet actually uses AES-128-CBC — see CLAUDE.md
+
+# PDF report generation (L1-27)
+reportlab==4.4.9          # PDF rendering for standalone audit reports
 
 # Hashing: hashlib is stdlib, no pin needed
 

@@ -18,6 +18,7 @@ import { ProductList } from "./ProductList";
 import { KeyRestore } from "./KeyRestore";
 import { NodeSizeToggle } from "./NodeSizeToggle";
 import { SupplierImpactView } from "./SupplierImpactView";
+import { ExportPanel } from "./ExportPanel";
 import { Landing } from "./Landing";
 
 function AppContent() {
@@ -95,6 +96,7 @@ function AppContent() {
           <DepthFilter />
           <NodeSizeToggle />
           <KeyRestore />
+          <ExportPanel />
         </div>
 
         {/* Main view */}
