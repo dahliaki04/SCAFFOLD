@@ -13,6 +13,9 @@ import { useScaffold } from "../context/ScaffoldContext";
 import { toDiffGraph } from "../adapters/toDiffGraph";
 import { DIFF_COLORS, type DiffStatus } from "../types";
 
+/** Highlight color for the path-to-end-product chain. */
+const PATH_HIGHLIGHT_COLOR = "#38BDF8"; // sky-blue accent
+
 export function DiffView() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sigmaRef = useRef<Sigma | null>(null);
@@ -26,6 +29,7 @@ export function DiffView() {
   } = useScaffold();
 
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   // Build the diff graph
   const graph = useMemo(() => {
@@ -97,6 +101,10 @@ export function DiffView() {
 
     sigma.on("enterNode", ({ node }) => setHoveredNode(node));
     sigma.on("leaveNode", () => setHoveredNode(null));
+    sigma.on("clickNode", ({ node }) => {
+      setSelectedNode((prev) => (prev === node ? null : node));
+    });
+    sigma.on("clickStage", () => setSelectedNode(null));
 
     sigmaRef.current = sigma;
 
@@ -106,23 +114,71 @@ export function DiffView() {
     };
   }, [graph]);
 
-  // Hover highlight: show connected nodes for hovered node
+  // Compute full upstream + downstream chain via iterative BFS
+  const getFullChain = useCallback(
+    (startNode: string): Set<string> => {
+      const related = new Set<string>();
+      related.add(startNode);
+
+      // BFS upstream (predecessors via in-neighbors)
+      const upQueue = [startNode];
+      while (upQueue.length > 0) {
+        const current = upQueue.shift()!;
+        graph.forEachInNeighbor(current, (neighbor) => {
+          if (!related.has(neighbor)) {
+            related.add(neighbor);
+            upQueue.push(neighbor);
+          }
+        });
+      }
+
+      // BFS downstream (successors via out-neighbors)
+      const downQueue = [startNode];
+      while (downQueue.length > 0) {
+        const current = downQueue.shift()!;
+        graph.forEachOutNeighbor(current, (neighbor) => {
+          if (!related.has(neighbor)) {
+            related.add(neighbor);
+            downQueue.push(neighbor);
+          }
+        });
+      }
+
+      return related;
+    },
+    [graph]
+  );
+
+  // Highlight: hover shows immediate neighbors, click shows full path chain
   useEffect(() => {
     const sigma = sigmaRef.current;
     if (!sigma) return;
 
-    if (hoveredNode) {
-      const neighbors = new Set<string>();
-      neighbors.add(hoveredNode);
-      graph.forEachNeighbor(hoveredNode, (neighbor) => {
-        neighbors.add(neighbor);
-      });
+    // Click selection takes priority over hover
+    const activeNode = selectedNode ?? hoveredNode;
+
+    if (activeNode) {
+      const highlighted = selectedNode
+        ? getFullChain(activeNode)
+        : (() => {
+            const neighbors = new Set<string>();
+            neighbors.add(activeNode);
+            graph.forEachNeighbor(activeNode, (neighbor) => {
+              neighbors.add(neighbor);
+            });
+            return neighbors;
+          })();
 
       sigma.setSetting("nodeReducer", (node, data) => {
-        if (node === hoveredNode) {
-          return { ...data, zIndex: 2, highlighted: true };
+        if (node === activeNode) {
+          return {
+            ...data,
+            zIndex: 2,
+            highlighted: true,
+            color: selectedNode ? PATH_HIGHLIGHT_COLOR : data.color,
+          };
         }
-        if (neighbors.has(node)) {
+        if (highlighted.has(node)) {
           return { ...data, zIndex: 1 };
         }
         return { ...data, color: "#2a2d35", label: "", zIndex: 0 };
@@ -130,7 +186,7 @@ export function DiffView() {
       sigma.setSetting("edgeReducer", (edge, data) => {
         const source = graph.source(edge);
         const target = graph.target(edge);
-        if (neighbors.has(source) && neighbors.has(target)) {
+        if (highlighted.has(source) && highlighted.has(target)) {
           return { ...data, size: 2 };
         }
         return { ...data, color: "#1a1d22", size: 0.5 };
@@ -141,7 +197,7 @@ export function DiffView() {
     }
 
     sigma.refresh();
-  }, [hoveredNode, graph]);
+  }, [hoveredNode, selectedNode, graph, getFullChain]);
 
   // Search highlight
   useEffect(() => {

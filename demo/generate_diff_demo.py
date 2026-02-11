@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
 """Generate demo diff data for L2-19 BOM comparison feature.
 
-Scenario: "6 months later — Product line refresh"
+Scenario: "6 months later — GPU line technology upgrade"
   Baseline: Current demo BOM (6 end products, semiconductor supply chain)
-  Target:   Modified BOM after strategic changes:
-    - NEW: IC-5NM-AI accelerator product added (new product line)
-    - REMOVED: IC-28NM-IOT discontinued (end-of-life)
-    - MODIFIED: GPU line lead times changed (new supplier partnership)
-    - MODIFIED: Some edge quantities adjusted (volume ramp)
-    - NEW site: FAB-KR (new Korean fab for 5nm AI chip)
+  Target:   Modified BOM after mid-path component swap:
+    - REMOVED: GPU-INTERPOSER@OSAT-MY replaced by new CoWoS bridge technology
+    - ADDED:   COWOS-BRIDGE@OSAT-MY (next-gen interposer replacement)
+    - MODIFIED: GPU-UNDERFILL lead time decreased (dual-sourced now)
+    - MODIFIED: PHOTOMASK-EUV lead time increased (capacity crunch)
+    - MODIFIED: MICROBUMP qty increased (higher density design)
+    - MODIFIED: PHOTORESIST qty increased (more layers)
+
+  No end products are added or removed — the change is a mid-path
+  component substitution within the existing GPU supply chain.
 
 Uses the same SHA-256 hashing as the real SCAFFOLD pipeline (L1-16).
 """
@@ -46,199 +50,86 @@ def main():
     target["meta"]["generated"] = "2026-08-11T00:41:26.981220+00:00"
 
     # ─────────────────────────────────────────────────────
-    # Identify nodes to REMOVE (IC-28NM-IOT product line)
+    # REMOVE mid-path component: GPU-INTERPOSER@OSAT-MY
+    # (Replaced by CoWoS bridge technology — see ADD section)
     # ─────────────────────────────────────────────────────
-    iot_parts = [
-        ("IC-28NM-IOT", "DC-EU"),
-        ("IC-28NM-IOT", "FT-SG"),
-        ("IC-28NM-IOT", "OSAT-CN"),
-        ("TESTED-DIE-IOT", "OSAT-CN"),
-        ("TESTED-DIE-IOT", "FAB-US"),
-        ("WAFER-IOT", "FAB-US"),
-        ("PHOTOMASK-IOT", "FAB-US"),
-        # IOT-unique parts only (DFN leadframe, bond wire Cu, epoxy)
-        ("DFN-LEADFRAME", "OSAT-CN"),
-        ("BOND-WIRE-CU", "OSAT-CN"),
-        ("EPOXY-COMPOUND", "OSAT-CN"),
-    ]
-    iot_hashes = {node_hash(p, s) for p, s in iot_parts}
-    iot_ep_hash = node_hash("IC-28NM-IOT", "DC-EU")
+    old_interposer_hash = node_hash("GPU-INTERPOSER", "OSAT-MY")
 
-    # Remove IOT nodes
-    for h in iot_hashes:
-        target["nodes"].pop(h, None)
-        target["risk"].pop(h, None)
+    # Remove the node
+    target["nodes"].pop(old_interposer_hash, None)
+    target["risk"].pop(old_interposer_hash, None)
 
-    # Remove IOT edges
+    # Remove edges referencing the old interposer
     target["edges"] = [
         e for e in target["edges"]
-        if e["parent"] not in iot_hashes and e["child"] not in iot_hashes
+        if e["parent"] != old_interposer_hash and e["child"] != old_interposer_hash
     ]
 
-    # Remove IOT paths
-    target["paths"].pop(iot_ep_hash, None)
+    # Update paths: replace old interposer hash with new one in GPU paths
+    gpu_ep_hash = node_hash("IC-7NM-GPU", "DC-US")
+    new_bridge_hash = node_hash("COWOS-BRIDGE", "OSAT-MY")
 
-    # Clean up patterns that reference the IOT product
-    for pid, pat in list(target["patterns"].items()):
-        pat["products"] = [p for p in pat["products"] if p != iot_ep_hash]
-        if not pat["products"]:
-            del target["patterns"][pid]
+    if gpu_ep_hash in target["paths"]:
+        updated_paths = []
+        for path in target["paths"][gpu_ep_hash]:
+            updated_path = [
+                new_bridge_hash if h == old_interposer_hash else h
+                for h in path
+            ]
+            updated_paths.append(updated_path)
+        target["paths"][gpu_ep_hash] = updated_paths
 
-    # Clean up suppliers: remove IOT-only supplied nodes
-    for sup_hash, sup_info in list(target["suppliers"].items()):
+    # Clean up suppliers: replace old interposer references
+    for sup_hash, sup_info in target["suppliers"].items():
         sup_info["supplied_nodes"] = [
-            n for n in sup_info["supplied_nodes"] if n not in iot_hashes
+            new_bridge_hash if n == old_interposer_hash else n
+            for n in sup_info["supplied_nodes"]
         ]
-        sup_info["affected_products"] = [
-            p for p in sup_info["affected_products"] if p != iot_ep_hash
-        ]
-        sup_info["impact_count"] = len(sup_info["affected_products"])
-        # Don't remove suppliers entirely — they may still supply other lines
 
     # ─────────────────────────────────────────────────────
-    # ADD new product: IC-5NM-AI (AI accelerator)
-    # New site: FAB-KR for advanced 5nm fabrication
+    # ADD replacement: COWOS-BRIDGE@OSAT-MY
+    # (Next-gen CoWoS bridge replaces traditional interposer)
     # ─────────────────────────────────────────────────────
-    fab_kr_hash = site_hash("FAB-KR")
-    dc_us_hash = site_hash("DC-US")
-    ft_sg_hash = site_hash("FT-SG")
     osat_my_hash = site_hash("OSAT-MY")
-    bump_tw_hash = site_hash("BUMP-TW")
 
-    # Stage mapping from the existing data:
-    # S1 = Assembly, S2 = Bumping, S3 = Circuit Probe, S4 = Distribution,
-    # S5 = Fabrication, S6 = Final Test
+    # Get the old interposer's attributes from baseline for reference
+    old_attrs = baseline["nodes"].get(old_interposer_hash, {})
+    old_depth = old_attrs.get("depth", 3)
+    old_stage = old_attrs.get("stage", "S1")
 
-    new_parts = [
-        # (part, site, stage, lt, depth)
-        ("IC-5NM-AI", "DC-US", "S4", 0, 0),          # End product at DC
-        ("IC-5NM-AI", "FT-SG", "S6", 0, 1),          # Final test
-        ("IC-5NM-AI", "OSAT-MY", "S1", 0, 2),         # Assembly
-        ("BUMPED-DIE-AI", "OSAT-MY", "S1", 0, 3),     # Assembly
-        ("BUMPED-DIE-AI", "BUMP-TW", "S2", 0, 4),     # Bumping
-        ("TESTED-DIE-AI", "BUMP-TW", "S2", 0, 5),     # Bumping (transfer)
-        ("TESTED-DIE-AI", "FAB-KR", "S3", 0, 6),      # Circuit Probe — NEW FAB!
-        ("WAFER-AI", "FAB-KR", "S5", 0, 7),           # Fabrication
-        ("PHOTOMASK-AI", "FAB-KR", "S5", 48, 8),      # New EUV mask
-        ("AI-INTERPOSER", "OSAT-MY", "S1", 22, 3),    # CoWoS interposer
-        ("HBM-STACK", "OSAT-MY", "S1", 35, 3),        # HBM memory stack
-    ]
-
-    site_map = {
-        "DC-US": dc_us_hash,
-        "FT-SG": ft_sg_hash,
-        "OSAT-MY": osat_my_hash,
-        "BUMP-TW": bump_tw_hash,
-        "FAB-KR": fab_kr_hash,
+    # New node: same depth/stage as old interposer, but longer lead time
+    # (new technology = higher lead time initially)
+    target["nodes"][new_bridge_hash] = {
+        "stage": old_stage,
+        "lt": 32,       # higher than old ~25, new tech supply chain
+        "depth": old_depth,
+        "site": osat_my_hash,
+    }
+    target["risk"][new_bridge_hash] = {
+        "max_lt": 32,
+        "single_source": True,  # new tech, only one qualified supplier
+        "depth": old_depth,
     }
 
-    for part, site, stage, lt, depth in new_parts:
-        h = node_hash(part, site)
-        target["nodes"][h] = {
-            "stage": stage,
-            "lt": lt,
-            "depth": depth,
-            "site": site_map[site],
-        }
-        target["risk"][h] = {
-            "max_lt": lt,
-            "single_source": part in ("PHOTOMASK-AI", "HBM-STACK"),  # new critical
-            "depth": depth,
-        }
+    # Re-add the edge: GPU assembly at OSAT-MY → COWOS-BRIDGE
+    gpu_osat_hash = node_hash("IC-7NM-GPU", "OSAT-MY")
+    target["edges"].append({
+        "parent": gpu_osat_hash,
+        "child": new_bridge_hash,
+        "qty": 1,
+    })
 
-    # New edges for IC-5NM-AI supply chain
-    new_edges = [
-        # Transfer: DC-US ← FT-SG
-        ("IC-5NM-AI", "DC-US", "IC-5NM-AI", "FT-SG", 1),
-        # Transfer: FT-SG ← OSAT-MY
-        ("IC-5NM-AI", "FT-SG", "IC-5NM-AI", "OSAT-MY", 1),
-        # Assembly: OSAT-MY ← children
-        ("IC-5NM-AI", "OSAT-MY", "BUMPED-DIE-AI", "OSAT-MY", 1),
-        ("IC-5NM-AI", "OSAT-MY", "AI-INTERPOSER", "OSAT-MY", 1),
-        ("IC-5NM-AI", "OSAT-MY", "HBM-STACK", "OSAT-MY", 4),
-        # Transfer: BUMPED-DIE-AI OSAT-MY ← BUMP-TW
-        ("BUMPED-DIE-AI", "OSAT-MY", "BUMPED-DIE-AI", "BUMP-TW", 1),
-        # Assembly: BUMP-TW
-        ("BUMPED-DIE-AI", "BUMP-TW", "TESTED-DIE-AI", "BUMP-TW", 1),
-        # Reuse existing SOLDER-BUMP from bumping
-        ("BUMPED-DIE-AI", "BUMP-TW", "SOLDER-BUMP", "BUMP-TW", 6000),
-        # Transfer: TESTED-DIE-AI BUMP-TW ← FAB-KR
-        ("TESTED-DIE-AI", "BUMP-TW", "TESTED-DIE-AI", "FAB-KR", 1),
-        # Assembly: FAB-KR
-        ("TESTED-DIE-AI", "FAB-KR", "WAFER-AI", "FAB-KR", 1),
-        ("WAFER-AI", "FAB-KR", "PHOTOMASK-AI", "FAB-KR", 1),
-        # Reuse SILICON-INGOT (but at new site FAB-KR — would need new node)
-        # Test equipment reuse
-        ("IC-5NM-AI", "FT-SG", "TEST-SOCKET-ADV", "FT-SG", 1),
-        ("IC-5NM-AI", "FT-SG", "MARKING-INK", "FT-SG", 1),
-    ]
-
-    for ap, as_, cp, cs, qty in new_edges:
-        target["edges"].append({
-            "parent": node_hash(ap, as_),
-            "child": node_hash(cp, cs),
-            "qty": qty,
-        })
-
-    # New paths for IC-5NM-AI
-    ai_ep_hash = node_hash("IC-5NM-AI", "DC-US")
-    target["paths"][ai_ep_hash] = [
-        [
-            node_hash("IC-5NM-AI", "DC-US"),
-            node_hash("IC-5NM-AI", "FT-SG"),
-            node_hash("IC-5NM-AI", "OSAT-MY"),
-            node_hash("BUMPED-DIE-AI", "OSAT-MY"),
-            node_hash("BUMPED-DIE-AI", "BUMP-TW"),
-            node_hash("TESTED-DIE-AI", "BUMP-TW"),
-            node_hash("TESTED-DIE-AI", "FAB-KR"),
-            node_hash("WAFER-AI", "FAB-KR"),
-            node_hash("PHOTOMASK-AI", "FAB-KR"),
-        ],
-    ]
-
-    # New supplier entries for AI parts
-    new_suppliers = {
-        "SAMSUNG-FAB": {
-            "parts": [("WAFER-AI", "FAB-KR")],
-            "impact": [ai_ep_hash],
-        },
-        "ASML-LITHO": {
-            "parts": [("PHOTOMASK-AI", "FAB-KR")],
-            "impact": [ai_ep_hash],
-        },
-        "SK-HYNIX": {
-            "parts": [("HBM-STACK", "OSAT-MY")],
-            "impact": [ai_ep_hash],
-        },
+    # Add supplier for the new CoWoS bridge
+    cowos_sup_hash = sha256_hash("TSMC-COWOS")
+    target["suppliers"][cowos_sup_hash] = {
+        "supplied_nodes": [new_bridge_hash],
+        "affected_products": [gpu_ep_hash],
+        "impact_count": 1,
     }
-
-    for sup_name, info in new_suppliers.items():
-        sup_hash = sha256_hash(sup_name)
-        supplied = [node_hash(p, s) for p, s in info["parts"]]
-        if sup_hash in target["suppliers"]:
-            # Existing supplier — append
-            target["suppliers"][sup_hash]["supplied_nodes"].extend(supplied)
-            target["suppliers"][sup_hash]["affected_products"].extend(info["impact"])
-            target["suppliers"][sup_hash]["impact_count"] = len(
-                set(target["suppliers"][sup_hash]["affected_products"])
-            )
-        else:
-            target["suppliers"][sup_hash] = {
-                "supplied_nodes": supplied,
-                "affected_products": info["impact"],
-                "impact_count": len(info["impact"]),
-            }
 
     # ─────────────────────────────────────────────────────
     # MODIFY existing nodes (GPU line lead time changes)
     # ─────────────────────────────────────────────────────
-
-    # GPU interposer: lead time increased (supply constraint)
-    gpu_interposer_hash = node_hash("GPU-INTERPOSER", "OSAT-MY")
-    if gpu_interposer_hash in target["nodes"]:
-        target["nodes"][gpu_interposer_hash]["lt"] = 30  # was ~25
-    if gpu_interposer_hash in target["risk"]:
-        target["risk"][gpu_interposer_hash]["max_lt"] = 30
 
     # GPU underfill: lead time decreased (dual-sourced now)
     gpu_underfill_hash = node_hash("GPU-UNDERFILL", "OSAT-MY")
@@ -296,10 +187,11 @@ def main():
             modified += 1
 
     print(f"\nDiff summary:")
-    print(f"  Added:     {len(added)} nodes (IC-5NM-AI product line)")
-    print(f"  Removed:   {len(removed)} nodes (IC-28NM-IOT discontinued)")
-    print(f"  Modified:  {modified} nodes (lead time / attribute changes)")
-    print(f"  Unchanged: {len(common) - modified} nodes")
+    print(f"  Added:     {len(added)} node(s) (COWOS-BRIDGE replaces GPU-INTERPOSER)")
+    print(f"  Removed:   {len(removed)} node(s) (GPU-INTERPOSER discontinued)")
+    print(f"  Modified:  {modified} node(s) (lead time / attribute changes)")
+    print(f"  Unchanged: {len(common) - modified} node(s)")
+    print(f"  Products:  {len(baseline['paths'])} → {len(target['paths'])} (no change)")
 
 
 if __name__ == "__main__":
