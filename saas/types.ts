@@ -123,3 +123,61 @@ export const DEFAULT_STAGE_COLOR = "#6B7280";
 export function getStageColor(stage: string): string {
   return STAGE_COLORS[stage] ?? DEFAULT_STAGE_COLOR;
 }
+
+/* ── L2-19 to L2-22: BOM Diff / Comparison Types ─────────────── */
+
+/** Status of a node or edge in a diff comparison. */
+export type DiffStatus = "added" | "removed" | "unchanged" | "modified";
+
+/** Colors for diff overlay (L2-20). */
+export const DIFF_COLORS: Record<DiffStatus, string> = {
+  added: "#34A853",    // green — new nodes (L2-22)
+  removed: "#EA4335",  // red — deleted nodes (L2-22)
+  modified: "#F59E0B", // orange — changed attributes
+  unchanged: "#6B7280", // gray — no change
+};
+
+/** Per-node diff detail. */
+export interface NodeDiff {
+  status: DiffStatus;
+  /** Delta values — only present when status is "modified". */
+  deltaLt?: number;
+  deltaDepth?: number;
+  oldStage?: string;
+  newStage?: string;
+}
+
+/** Per-edge diff detail. */
+export interface EdgeDiff {
+  status: DiffStatus;
+  deltaQty?: number;
+}
+
+/** Aggregate delta metrics (L2-21). */
+export interface DeltaMetrics {
+  baselineNodeCount: number;
+  targetNodeCount: number;
+  addedNodes: number;
+  removedNodes: number;
+  modifiedNodes: number;
+  unchangedNodes: number;
+  baselineEdgeCount: number;
+  targetEdgeCount: number;
+  addedEdges: number;
+  removedEdges: number;
+  /** Max depth change (target - baseline). */
+  deltaMaxDepth: number;
+  /** Average risk change across all nodes present in both. */
+  deltaAvgRisk: number;
+  /** New end products in target. */
+  addedProducts: string[];
+  /** Removed end products from baseline. */
+  removedProducts: string[];
+}
+
+/** Full diff result between baseline and target (L2-19). */
+export interface DiffResult {
+  nodeDiffs: Record<string, NodeDiff>;
+  edgeDiffs: Record<string, EdgeDiff>;
+  metrics: DeltaMetrics;
+}

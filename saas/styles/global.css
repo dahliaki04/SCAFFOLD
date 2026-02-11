@@ -900,4 +900,143 @@ body {
     width: calc(100vw - 32px);
     max-width: 360px;
   }
+
+  /* Diff upload responsive */
+  .diff-upload-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .diff-upload-arrow {
+    transform: rotate(90deg);
+  }
+}
+
+/* ========================================
+   L2-19 to L2-22: BOM Diff / Comparison
+   ======================================== */
+
+/* Diff view container */
+.diff-view-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Diff legend overlay */
+.diff-legend {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  gap: 16px;
+  z-index: 5;
+}
+
+.diff-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.diff-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.diff-legend-label {
+  white-space: nowrap;
+}
+
+/* Delta metrics panel */
+.delta-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.delta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.delta-label {
+  color: var(--text-muted);
+}
+
+.delta-value {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.delta-badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: monospace;
+}
+
+.delta-positive {
+  background: rgba(52, 168, 83, 0.15);
+  color: #34a853;
+}
+
+.delta-negative {
+  background: rgba(234, 67, 53, 0.15);
+  color: #ea4335;
+}
+
+/* Delta products */
+.delta-products {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 8px;
+}
+
+.delta-product-group h4 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  margin-top: 6px;
+}
+
+.delta-product-group h4:first-child {
+  margin-top: 0;
+}
+
+.delta-product-item {
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.delta-product-added {
+  background: rgba(52, 168, 83, 0.1);
+  border-left: 2px solid #34a853;
+}
+
+.delta-product-removed {
+  background: rgba(234, 67, 53, 0.1);
+  border-left: 2px solid #ea4335;
 }

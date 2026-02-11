@@ -5,11 +5,11 @@
 
 ## Product Identity
 
-SCAFFOLD is a **supply chain static structure audit and visualization platform**. Consultants and planners drop customer BOM data into a Local Tool (Python desktop), which validates structural integrity, computes risk metrics, anonymizes data, and outputs files that can optionally be uploaded to a SaaS platform (React web) for interactive visualization and editable report generation.
+SCAFFOLD is a **BOM transparency and visualization platform** — making supply chain structure visible without requiring large SCM systems. Consultants and planners feed customer BOM data (from Excel, CSV, or system exports) into a Local Tool (Python desktop), which validates structural integrity, computes risk metrics, anonymizes data, and outputs files that can optionally be uploaded to a SaaS platform (React web) for interactive visualization and editable report generation.
 
 - **Repository**: `dahliaki04/SCAFFOLD`
 - **License**: AGPL-3.0
-- **Market**: Any manufacturer with BOMs
+- **Market**: Any manufacturer with BOMs — especially those without enterprise SCM/PLM
 - **Philosophy**: Murphy's Law — the weakest link in the structure is the inherent risk
 - **Design Principle**: Survivor-first — zero trust, offline-first, tools travel with you
 
@@ -20,11 +20,14 @@ Two-segment disconnected architecture (privacy by design):
 ```
 LOCAL TOOL (Python Desktop)                    SAAS PLATFORM (React Web)
 ─────────────────────────────                  ────────────────────────
-Excel → Validate → Risk Engine → Dual Ledger   Graph View (Sigma.js)
-                                                Sankey (D3.js)
-Outputs:                                        Diff Overlay
-  upload.json  → to SaaS (plaintext, masked)    Client-side Restore (key.scaf)
-  key.scaf     → stays local (AES-256)          PPT Export
+Input → Validate → Risk Engine → Dual Ledger   Graph View (Sigma.js)
+  ├ Excel (.xlsx)                               Sankey (D3.js)
+  ├ CSV (.csv)                                  Diff Overlay
+  └ System Export (ERP/MRP/PLM)                 Client-side Restore (key.scaf)
+                                                PPT Export
+Outputs:
+  upload.json    → to SaaS (plaintext, masked)
+  key.scaf       → stays local (AES-256)
   validated.xlsx → standalone value
   report.pdf     → standalone value
 ```
@@ -39,7 +42,7 @@ Outputs:                                        Diff Overlay
 
 | Sprint | Duration | Focus | P0 Count | Deliverable |
 |--------|----------|-------|----------|-------------|
-| S1 | 2 weeks | Local Core (`transformer.py`) | 16 | CLI: Excel → upload.json + key.scaf |
+| S1 | 2 weeks | Local Core (`transformer.py`) | 16 | CLI: Input → upload.json + key.scaf |
 | S2 | 2 weeks | Local Reports (`local_reports.py`) | 7 | validated.xlsx + reports (standalone value) |
 | S3 | 2 weeks | SaaS MVP | 18 | Sigma.js Graph + Sankey + key restore |
 | S4 | 2 weeks | Package & Ship | 8 | GUI + export + tier gate + PPT |
@@ -50,7 +53,7 @@ Build order: Read → Validate → Risk → Dual Ledger
 
 | ID | Feature | Priority | Description |
 |----|---------|----------|-------------|
-| L1-01 | V4 Excel Reader | P0 | Read Part Master / BOM / Supplier Map tabs via xlwings |
+| L1-01 | V4 Input Reader | P0 | Read Part Master / BOM / Supplier Map via xlwings (Excel) or pandas (CSV/system export) behind I/O abstraction |
 | L1-02 | Schema Validation | P0 | Check required fields, data types, column names |
 | L1-03 | SubGroup UsageShare Check | P0 | Validate UsageShare sums to 1.0 per SubGroup |
 | L1-04 | NetworkX DiGraph Build | P0 | Batch edge list from BOM, node key = (PartName, SiteID) |
@@ -82,7 +85,7 @@ Build order: Reports + Proposals (standalone without SaaS)
 | L1-25 | PartSource Proposal | P0 | Excel with checkbox for consultant review |
 | L1-15 | Site Dependency Map | P1 | Factory relocation → which BOMs need change |
 | L1-26 | Proposal Readback | P1 | Re-read consultant's checkbox decisions |
-| L1-27 | PDF Audit Report | P1 | Standalone structure audit report |
+| L1-27 | PDF Structure Report | P1 | Standalone BOM structure transparency report |
 
 ### Sprint 3 — SaaS MVP (18 P0 + 2 P1)
 
@@ -128,7 +131,7 @@ Build order: GUI + Export + Tier Gate + PPT
 | L2-29 | Rasterized PDF Export | P0 | Image-based PDF, anti-OCR (Light tier) |
 | L2-31 | Editable PPT Export | P0 | Slide deck with editable text/charts (Heavy tier) |
 | L2-32 | RSA Signature Verification | P0 | Digital signature for paid feature gate |
-| L1-07 | Multi-format Input (xlsx/csv) | P1 | Support .xlsx and .csv input |
+| L1-07 | Multi-format Input (xlsx/csv/system) | P1 | Support .xlsx, .csv, and system export input via I/O abstraction |
 | L1-35 | SmartScreen Disclaimer | P1 | First-run warning, save EV cert cost |
 | L1-38 | Sample Data + README | P1 | Demo dataset for onboarding |
 | L2-30 | Layout Destruction (anti-OCR) | P1 | Micro-offset text positioning |
@@ -303,7 +306,7 @@ VERSION = 3
 
 ## Data Standard (V4 Schema)
 
-Users prepare data in this format; the Local Tool validates it.
+Users prepare data in this format; the Local Tool validates it. Data can come from manual Excel files, CSV exports, or system exports (ERP/MRP/PLM). The schema is the same regardless of input source — the I/O layer normalizes all inputs into the same internal DataFrames.
 
 | Tab | Key Fields | Required | Logic |
 |-----|-----------|----------|-------|
@@ -380,11 +383,82 @@ def assign_activity(part, site, G):
 `IsEndProduct` is **not** used for Make/Buy/Transfer assignment — activity is fully BOM-derived.
 `IsEndProduct` (boolean on Part Master) marks demand entry points: used by L1-11 Path Fingerprinting as DFS start nodes, and by L1-31 Free Tier Gate to count end products (≤5 in Free tier).
 
-## upload.json Format
+## Demo Input Files
+
+Sample input files for onboarding and testing (L1-38). All demo files live in `samples/`.
+
+### Sample Excel Input (`samples/demo_bom.xlsx`)
+
+Three tabs matching the V4 Schema:
+
+**Tab 1: Part Master**
+
+| PartNumber | Site | IsEndProduct | Stage |
+|------------|------|-------------|-------|
+| FG-001 | DC-01 | TRUE | Finished Goods |
+| FG-001 | PLANT1 | FALSE | Finished Goods |
+| WIP-01 | PLANT1 | FALSE | Work In Process |
+| WIP-02 | PLANT1 | FALSE | Work In Process |
+| RM-01 | PLANT1 | FALSE | Raw Material |
+| RM-02 | PLANT2 | FALSE | Raw Material |
+
+**Tab 2: BOM Structure**
+
+| AssemblyName | AssemblySite | ComponentName | ComponentSite | Qty | SubGroup | UsageShare |
+|--------------|-------------|---------------|--------------|-----|----------|------------|
+| FG-001 | DC-01 | FG-001 | PLANT1 | 1 | | |
+| FG-001 | PLANT1 | WIP-01 | PLANT1 | 2 | | |
+| FG-001 | PLANT1 | WIP-02 | PLANT1 | 1 | | |
+| WIP-01 | PLANT1 | RM-01 | PLANT1 | 3 | GRP-A | 0.6 |
+| WIP-01 | PLANT1 | RM-02 | PLANT2 | 3 | GRP-A | 0.4 |
+
+**Tab 3: Supplier Map**
+
+| Part | Supplier | LeadTime |
+|------|----------|----------|
+| RM-01 | SUP-A | 14 |
+| RM-01 | SUP-B | 21 |
+| RM-02 | SUP-C | 30 |
+
+### Sample CSV Input (`samples/demo_parts.csv`, `samples/demo_bom.csv`, `samples/demo_suppliers.csv`)
+
+Same schema as the Excel tabs, one CSV per tab. Used for system export workflows.
+
+### Sample System Export (`samples/demo_system_export/`)
+
+Directory containing flat files in a common ERP extract format. The I/O layer normalizes these into the same internal DataFrames as Excel/CSV input.
+
+| File | Maps to | Notes |
+|------|---------|-------|
+| `items.csv` | Part Master | System field names mapped via config |
+| `structures.csv` | BOM Structure | Parent/child relationships |
+| `vendors.csv` | Supplier Map | Supplier lead time data |
+
+**Field mapping config** (`samples/demo_system_export/field_map.json`):
+```json
+{
+  "items": { "ITEM_ID": "PartNumber", "FACILITY": "Site", "IS_FG": "IsEndProduct", "CATEGORY": "Stage" },
+  "structures": { "PARENT": "AssemblyName", "PARENT_FAC": "AssemblySite", "CHILD": "ComponentName", "CHILD_FAC": "ComponentSite", "QTY_PER": "Qty" },
+  "vendors": { "ITEM_ID": "Part", "VENDOR_ID": "Supplier", "LT_DAYS": "LeadTime" }
+}
+```
+
+## Local Client Output Files
+
+All output files generated by the Local Tool. Files are timestamped (L1-23) and never overwrite previous runs.
+
+### upload.json — Masked Structure File
+
+- **Purpose**: Anonymized BOM structure for SaaS visualization
+- **Generated by**: L1-19 (upload.json Generator)
+- **Contains**: Zero human-readable business terms — all names hashed, values jittered, stages masked
+- **Destination**: Uploaded to SaaS platform (the **only** file that leaves the client)
+- **Tier**: Light and Heavy only (Free tier does not generate this file)
+- **Filename pattern**: `upload_YYYYMMDD_HHMMSS.json`
 
 ```json
 {
-  "meta": { "version": "3.0", "generated": "ISO-8601" },
+  "meta": { "version": "3.0", "generated": "ISO-8601", "tier": "Heavy", "tier_sig": "<RSA signature>" },
   "nodes": {
     "hash_id": { "stage": "S4", "lt": 47, "depth": 3, "site": "hash_site" }
   },
@@ -399,6 +473,45 @@ def assign_activity(part, site, G):
   }
 }
 ```
+
+### key.scaf — Encryption Key File
+
+- **Purpose**: Maps hashed/masked values back to real names and values
+- **Generated by**: L1-20 (key.scaf Generator)
+- **Contains**: AES-encrypted reverse mapping (hash→real name, S1→real stage, jittered→real value)
+- **Destination**: **Never leaves the client** — stays on consultant's machine
+- **Tier**: Heavy only
+- **Filename pattern**: `key_YYYYMMDD_HHMMSS.scaf`
+- **Binary format**: `MAGIC(4B) + VERSION(uint16 LE, 2B) + SALT(16B) + Fernet token`
+- **Decryption**: Password-based (PBKDF2, 1,200,000 iterations) — see Fernet Crypto Chain section
+
+### validated.xlsx — Annotated Input Workbook
+
+- **Purpose**: Copy of the original input with validation errors marked in-place
+- **Generated by**: L1-22 (In-place Excel Validation)
+- **Contains**: Original data + red-highlighted error cells + `_SCAFFOLD_Error` column per tab
+- **Destination**: Stays local — standalone deliverable even without SaaS
+- **Tier**: All tiers (Free, Light, Heavy)
+- **Filename pattern**: `validated_YYYYMMDD_HHMMSS.xlsx`
+- **Value**: Consultants can hand this to customers as immediate feedback
+
+### report.pdf — Structure Report
+
+- **Purpose**: Standalone BOM structure transparency report
+- **Generated by**: L1-27 (PDF Structure Report)
+- **Contains**: Network summary stats, risk metrics, single-source flags, site dependency overview
+- **Destination**: Stays local — standalone deliverable
+- **Tier**: All tiers (Free, Light, Heavy)
+- **Filename pattern**: `report_YYYYMMDD_HHMMSS.pdf`
+
+### Output File Summary
+
+| File | Tier | Leaves Client | Encrypted | Masked | Standalone Value |
+|------|------|--------------|-----------|--------|-----------------|
+| `validated.xlsx` | All | No | No | No (original data) | Yes |
+| `report.pdf` | All | No | No | N/A (summary stats) | Yes |
+| `upload.json` | Light+ | Yes (to SaaS) | No | Yes (fully masked) | No (needs SaaS) |
+| `key.scaf` | Heavy | **Never** | Yes (AES) | N/A (contains mappings) | No (used with SaaS) |
 
 ## Three-Tier Monetization
 
