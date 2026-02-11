@@ -2,7 +2,7 @@
   "meta": {
     "version": "3.0",
     "type": "sample_results",
-    "generated": "2026-02-11T12:15:25.771185+00:00",
+    "generated": "2026-02-11T17:42:07.309093+00:00",
     "description": "SCAFFOLD validation results from intentionally broken sample data. Demonstrates every category of error the Local Tool can detect."
   },
   "input_summary": {
@@ -186,9 +186,9 @@
       "count": 1,
       "details": [
         [
-          "SEAL-KIT@PLANT-A",
           "ROTOR@PLANT-A",
-          "STATOR@PLANT-A"
+          "STATOR@PLANT-A",
+          "SEAL-KIT@PLANT-A"
         ]
       ]
     },
