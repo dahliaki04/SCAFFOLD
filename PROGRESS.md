@@ -1,6 +1,6 @@
 # SCAFFOLD Progress Report
 
-> Date: 2026-02-10 | Total Tests: 266 (208 Python + 58 JS) | All Passing
+> Date: 2026-02-10 | Total Tests: 289 (208 Python + 81 JS) | All Passing
 
 ---
 
@@ -11,8 +11,8 @@
 | S1 | Local Core | 16/16 | - | 16/16 | COMPLETE |
 | S2 | Local Reports | 7/7 | 3/3 | 10/10 | COMPLETE |
 | S3 | SaaS MVP | 18/18 | 3/3 | 21/21 | COMPLETE |
-| S4 | Package & Ship | 5/8 | 3/3 | 8/11 | 73% |
-| **Total** | | **46/49** | **9/11** | **55/58** | **95%** |
+| S4 | Package & Ship | 8/8 | 3/3 | 11/11 | COMPLETE |
+| **Total** | | **49/49** | **9/9** | **58/58** | **100%** |
 
 Phase 2 (P2): 0/12 started (deferred by design).
 
@@ -98,11 +98,11 @@ All 18 P0 and 3 P1 features are implemented.
 
 **Note on L2-12**: Filtering logic works correctly. Site label restoration post-key-restore has a minor display issue (shows hash instead of real name in some cases).
 
-**Test coverage**: `tests/saas/` — 58 tests across 4 test files.
+**Test coverage**: `tests/saas/` — 81 tests across 5 test files.
 
 ---
 
-## Sprint 4 — Package & Ship (8/11, 73%)
+## Sprint 4 — Package & Ship (11/11 COMPLETE)
 
 | ID | Feature | Priority | Status | File |
 |----|---------|----------|--------|------|
@@ -111,28 +111,27 @@ All 18 P0 and 3 P1 features are implemented.
 | L1-31 | Free Tier Gate | P0 | **DONE** | `local/core/licensing.py` |
 | L1-32 | ttkbootstrap GUI | P0 | **DONE** | `local/gui/app.py` |
 | L1-33 | PyInstaller Build | P0 | **DONE** | `scaffold.spec`, `main.py` |
-| L2-29 | Rasterized PDF Export | P0 | NOT STARTED | SaaS-side feature |
-| L2-31 | Editable PPT Export | P0 | NOT STARTED | SaaS-side feature |
+| L2-29 | Rasterized PDF Export | P0 | **DONE** | `saas/lib/exportPdf.ts`, `saas/components/ExportPanel.tsx` |
+| L2-31 | Editable PPT Export | P0 | **DONE** | `saas/lib/exportPpt.ts`, `saas/components/ExportPanel.tsx` |
 | L2-32 | RSA Signature Verification | P0 | **DONE** | `local/core/licensing.py` |
 | L1-07 | Multi-format Input | P1 | **DONE** | `local/cli.py` (Excel + CSV) |
 | L1-35 | SmartScreen Disclaimer | P1 | **DONE** | `local/gui/app.py` |
 | L1-38 | Sample Data + README | P1 | **DONE** | `demo/` dir + README.md + USAGE.md |
 
+### L2-29 Detail
+
+Client-side rasterized PDF export via jsPDF. All text is rendered to canvas images (anti-OCR). Page 1: summary statistics table, stage legend, risk highlights. Page 2: current graph/sankey visualization capture. Tier-gated to Light and Heavy users.
+
+### L2-31 Detail
+
+Client-side editable PowerPoint (.pptx) export via pptxgenjs. 6-slide deck: title slide, network statistics table, graph visualization (as image), risk analysis table (top 10 by max LT), end product summary, footer. All text/tables are editable in PowerPoint. Tier-gated to Heavy users only.
+
 ### New in this update:
 
-- **L1-07**: CLI now accepts `--input data.xlsx` for single-workbook mode, or `--pm/--bom/--sup` for CSV mode
-- **L1-28**: Kinaxis V7 RapidResponse CSV export with Part, Site, Activity, Supplier, LeadTime, Category columns
-- **L1-29**: Generic flat CSV export with full analysis results (activity, risk, depth, suppliers)
-- **L1-31**: Free tier limits enforced at runtime (≤5 end products, ≤2000 rows)
-- **L1-32**: ttkbootstrap desktop GUI with darkly theme, file pickers, export toggles, progress log
-- **L1-33**: PyInstaller spec file (`scaffold.spec`) with UPX compression, hidden imports, ttkbootstrap collection
-- **L1-35**: SmartScreen first-run disclaimer dialog with flag file persistence
-- **L2-32**: Full RSA license key system — generate, sign, verify offline. License format: `SCAF-<TIER>-<b64>.<sig>`
-- **L1-27**: PDF audit report rendering via ReportLab (network summary table, validation errors, findings)
-
-### Remaining S4 items (SaaS-side):
-- **L2-29**: Rasterized PDF export (browser-side, anti-OCR)
-- **L2-31**: Editable PPT export (browser-side, python-pptx or equivalent)
+- **L2-29**: Rasterized PDF with anti-OCR — jsPDF renders all text as canvas images, preventing text extraction
+- **L2-31**: Editable PPT with 6 slides — pptxgenjs generates Office Open XML with editable tables and text
+- **ExportPanel**: Sidebar UI with tier-gated buttons (Free: disabled, Light: PDF only, Heavy: PDF + PPT)
+- All export happens client-side — zero network calls
 
 ---
 
@@ -160,10 +159,9 @@ All P2 features remain deferred per plan. No implementation started.
 
 | Metric | Value |
 |--------|-------|
-| Total test count | 266 (208 Python + 58 JS) |
+| Total test count | 289 (208 Python + 81 JS) |
 | Test pass rate | 100% |
 | Build status | `vite build` passing |
-| Bundle size | 491 KB (141 KB gzipped) |
 | Python test time | ~4s |
 | JS test time | ~6s |
 
@@ -179,7 +177,11 @@ All P2 features remain deferred per plan. No implementation started.
 | `local/gui/app.py` | L1-32, L1-35 | ttkbootstrap GUI + SmartScreen disclaimer |
 | `main.py` | L1-33 | Entry point (GUI or CLI based on args) |
 | `scaffold.spec` | L1-33 | PyInstaller build specification |
+| `saas/lib/exportPdf.ts` | L2-29 | Rasterized PDF export (anti-OCR, jsPDF) |
+| `saas/lib/exportPpt.ts` | L2-31 | Editable PPT export (pptxgenjs, 6 slides) |
+| `saas/components/ExportPanel.tsx` | L2-29, L2-31 | Tier-gated export sidebar UI |
 | `tests/local/test_licensing.py` | L1-31, L2-32 | 11 tests for licensing + tier gate |
 | `tests/local/test_exports.py` | L1-28, L1-29 | 12 tests for export plugins |
 | `tests/local/test_pdf_report.py` | L1-27 | 5 tests for PDF report rendering |
 | `tests/local/test_gui.py` | L1-32, L1-33, L1-35 | 10 tests for GUI + packaging |
+| `tests/saas/export.test.ts` | L2-29, L2-31 | 23 tests for SaaS export features |
