@@ -254,7 +254,7 @@ export function Landing() {
       {/* ── Hero ───────────────────────────────────────── */}
       <section className="landing-hero">
         <div className="landing-hero-content">
-          <div className="landing-hero-badge">Supply Chain Structure Audit</div>
+          <div className="landing-hero-badge">Supply Chain Visibility</div>
           <h1>
             See the risk your
             <br />
@@ -290,7 +290,7 @@ export function Landing() {
             <div className="hero-stat-divider" />
             <div className="hero-stat">
               <span className="hero-stat-value">3 clicks</span>
-              <span className="hero-stat-label">Excel to audit report</span>
+              <span className="hero-stat-label">Excel to full picture</span>
             </div>
           </div>
         </div>
@@ -422,7 +422,7 @@ export function Landing() {
               </div>
               <h3>Works fully offline</h3>
               <p>
-                Local tool validates, audits, and generates reports with zero
+                Local tool validates, analyzes, and generates reports with zero
                 internet. The online viewer processes everything in your browser.
               </p>
             </div>
@@ -801,7 +801,7 @@ export function Landing() {
           <div className="footer-brand">
             <span className="landing-logo">SCAFFOLD</span>
             <span className="footer-copy">
-              Supply chain structure audit.
+              Supply chain structure, visualized.
             </span>
           </div>
           <div className="footer-links">
