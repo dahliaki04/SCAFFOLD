@@ -1,0 +1,259 @@
+{
+  "meta": {
+    "version": "3.0",
+    "type": "sample_results",
+    "generated": "2026-02-11T12:15:25.771185+00:00",
+    "description": "SCAFFOLD validation results from intentionally broken sample data. Demonstrates every category of error the Local Tool can detect."
+  },
+  "input_summary": {
+    "part_master_rows": 18,
+    "bom_rows": 26,
+    "supplier_map_rows": 15
+  },
+  "schema_validation": {
+    "passed": false,
+    "total_errors": 8,
+    "part_master_errors": [
+      "Part Master: 1 row(s) with blank PartNumber",
+      "Part Master: 1 row(s) with blank Site"
+    ],
+    "bom_errors": [
+      "BOM Structure: 2 row(s) with Qty <= 0",
+      "BOM Structure: 1 row(s) with blank AssemblyName",
+      "BOM Structure: 1 row(s) with blank ComponentName"
+    ],
+    "supplier_map_errors": [
+      "Supplier Map: 2 row(s) with LeadTime <= 0"
+    ],
+    "usage_share_errors": [
+      "SubGroup 'ALT-SEAL': UsageShare sums to 0.9000, expected 1.0",
+      "SubGroup 'ALT-SHAFT': contains missing UsageShare values"
+    ]
+  },
+  "row_level_errors": {
+    "Part Master": {
+      "total_rows": 18,
+      "error_count": 2,
+      "errors": [
+        {
+          "row_index": 12,
+          "error": "Blank PartNumber",
+          "data": {
+            "PartNumber": null,
+            "Site": "PLANT-A",
+            "Stage": "Machining",
+            "IsEndProduct": false
+          }
+        },
+        {
+          "row_index": 14,
+          "error": "Blank Site",
+          "data": {
+            "PartNumber": "WIRE-COIL",
+            "Site": null,
+            "Stage": "Winding",
+            "IsEndProduct": false
+          }
+        }
+      ]
+    },
+    "BOM Structure": {
+      "total_rows": 26,
+      "error_count": 7,
+      "errors": [
+        {
+          "row_index": 14,
+          "error": "Qty <= 0",
+          "data": {
+            "AssemblyName": "FG-PUMP",
+            "AssemblySite": "PLANT-B",
+            "ComponentName": "GASKET",
+            "ComponentSite": "PLANT-B",
+            "Qty": 0,
+            "SubGroup": null,
+            "UsageShare": null
+          }
+        },
+        {
+          "row_index": 15,
+          "error": "Qty <= 0",
+          "data": {
+            "AssemblyName": "FG-PUMP",
+            "AssemblySite": "PLANT-B",
+            "ComponentName": "FLANGE",
+            "ComponentSite": "PLANT-B",
+            "Qty": -1,
+            "SubGroup": null,
+            "UsageShare": null
+          }
+        },
+        {
+          "row_index": 17,
+          "error": "Blank AssemblyName",
+          "data": {
+            "AssemblyName": null,
+            "AssemblySite": "PLANT-A",
+            "ComponentName": "BOLT-SET",
+            "ComponentSite": "PLANT-A",
+            "Qty": 1,
+            "SubGroup": null,
+            "UsageShare": null
+          }
+        },
+        {
+          "row_index": 18,
+          "error": "Blank ComponentName",
+          "data": {
+            "AssemblyName": "VOLUTE",
+            "AssemblySite": "PLANT-B",
+            "ComponentName": null,
+            "ComponentSite": "PLANT-B",
+            "Qty": 1,
+            "SubGroup": null,
+            "UsageShare": null
+          }
+        },
+        {
+          "row_index": 19,
+          "error": "SubGroup 'ALT-SEAL' sums to 0.9000",
+          "data": {
+            "AssemblyName": "BEARING",
+            "AssemblySite": "PLANT-A",
+            "ComponentName": "SEAL-KIT",
+            "ComponentSite": "PLANT-A",
+            "Qty": 1,
+            "SubGroup": "ALT-SEAL",
+            "UsageShare": 0.7
+          }
+        },
+        {
+          "row_index": 20,
+          "error": "SubGroup 'ALT-SEAL' sums to 0.9000",
+          "data": {
+            "AssemblyName": "BEARING",
+            "AssemblySite": "PLANT-A",
+            "ComponentName": "GASKET",
+            "ComponentSite": "PLANT-B",
+            "Qty": 1,
+            "SubGroup": "ALT-SEAL",
+            "UsageShare": 0.2
+          }
+        },
+        {
+          "row_index": 22,
+          "error": "Missing UsageShare",
+          "data": {
+            "AssemblyName": "IMPELLER",
+            "AssemblySite": "PLANT-B",
+            "ComponentName": "ROTOR",
+            "ComponentSite": "PLANT-A",
+            "Qty": 1,
+            "SubGroup": "ALT-SHAFT",
+            "UsageShare": null
+          }
+        }
+      ]
+    },
+    "Supplier Map": {
+      "total_rows": 15,
+      "error_count": 2,
+      "errors": [
+        {
+          "row_index": 6,
+          "error": "LeadTime <= 0",
+          "data": {
+            "Part": "ROTOR",
+            "Supplier": "INTERNAL",
+            "LeadTime": 0
+          }
+        },
+        {
+          "row_index": 7,
+          "error": "LeadTime <= 0",
+          "data": {
+            "Part": "STATOR",
+            "Supplier": "INTERNAL",
+            "LeadTime": -2
+          }
+        }
+      ]
+    }
+  },
+  "graph_analysis": {
+    "nodes": 17,
+    "edges": 24,
+    "cycles": {
+      "count": 1,
+      "details": [
+        [
+          "SEAL-KIT@PLANT-A",
+          "ROTOR@PLANT-A",
+          "STATOR@PLANT-A"
+        ]
+      ]
+    },
+    "orphans": {
+      "bom_not_in_parts": [
+        "CASTING-RAW@PLANT-A",
+        "WIRE-COIL@PLANT-A"
+      ],
+      "parts_not_in_bom": [
+        "ORPHAN-PART@PLANT-C"
+      ]
+    }
+  },
+  "risk_findings": {
+    "max_lead_times": {
+      "BEARING": 12,
+      "BOLT-SET": 3,
+      "CASTING-RAW": 45,
+      "FLANGE": 15,
+      "GASKET": 5,
+      "HOUSING": 21,
+      "IMPELLER": 30,
+      "ROTOR": 0,
+      "SEAL-KIT": 7,
+      "SHAFT": 14,
+      "STATOR": -2,
+      "VOLUTE": 21,
+      "WIRE-COIL": 25
+    },
+    "single_source_parts": [
+      "BOLT-SET",
+      "CASTING-RAW",
+      "FLANGE",
+      "GASKET",
+      "IMPELLER",
+      "ROTOR",
+      "SEAL-KIT",
+      "SHAFT",
+      "STATOR",
+      "VOLUTE",
+      "WIRE-COIL"
+    ],
+    "single_source_count": 11,
+    "invalid_leadtime_parts": [
+      "ROTOR",
+      "STATOR"
+    ],
+    "highest_lt_part": "CASTING-RAW",
+    "highest_lt_value": 45
+  },
+  "error_summary": {
+    "schema_validation_errors": 8,
+    "row_level_errors": 11,
+    "graph_structural_issues": 4,
+    "risk_warnings": 13,
+    "total_issues": 36,
+    "categories": {
+      "blank_fields": "Part Master has rows with blank PartNumber and blank Site",
+      "invalid_quantities": "BOM has rows with Qty <= 0",
+      "blank_references": "BOM has blank AssemblyName and ComponentName entries",
+      "invalid_leadtimes": "Supplier Map has LeadTime <= 0 (ROTOR, STATOR)",
+      "subgroup_integrity": "UsageShare does not sum to 1.0 (ALT-SEAL); missing UsageShare (ALT-SHAFT)",
+      "circular_bom": "Cycle: SEAL-KIT@PLANT-A -> ROTOR@PLANT-A -> STATOR@PLANT-A -> SEAL-KIT@PLANT-A",
+      "orphan_nodes": "BOM references parts not in Part Master (CASTING-RAW); Part Master has unused entries (ORPHAN-PART)",
+      "single_source_risk": "Multiple parts have only one supplier"
+    }
+  }
+}

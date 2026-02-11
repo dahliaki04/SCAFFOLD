@@ -330,6 +330,65 @@ export function LocalGuide() {
               When a part has multiple suppliers, SCAFFOLD takes the maximum lead time as the risk value.
             </div>
           </div>
+
+          <div className="guide-card">
+            <h3>Sample Files</h3>
+            <p>
+              Download sample CSV files to test the tool or use as a template for your own data.
+            </p>
+            <div className="guide-sample-links">
+              <div className="guide-sample-group">
+                <h4>Clean Demo Data (semiconductor BOM)</h4>
+                <ul>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/part_master.csv" target="_blank" rel="noopener noreferrer">
+                      part_master.csv
+                    </a> — 72 parts across 8 sites
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/bom_structure.csv" target="_blank" rel="noopener noreferrer">
+                      bom_structure.csv
+                    </a> — 81 BOM edges (assembly + transfer)
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/supplier_map.csv" target="_blank" rel="noopener noreferrer">
+                      supplier_map.csv
+                    </a> — 59 supplier relationships
+                  </li>
+                </ul>
+              </div>
+              <div className="guide-sample-group">
+                <h4>Error Demo Data (intentional errors for testing)</h4>
+                <p className="guide-sample-desc">
+                  These files contain intentional errors to demonstrate every validation check SCAFFOLD performs:
+                  blank fields, invalid quantities, circular BOM references, UsageShare mismatches,
+                  orphan nodes, and invalid lead times.
+                </p>
+                <ul>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/part_master.csv" target="_blank" rel="noopener noreferrer">
+                      part_master.csv
+                    </a> — includes blank PartNumber, blank Site, orphan part
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/bom_structure.csv" target="_blank" rel="noopener noreferrer">
+                      bom_structure.csv
+                    </a> — includes Qty &le; 0, blank references, circular BOM, SubGroup errors
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/supplier_map.csv" target="_blank" rel="noopener noreferrer">
+                      supplier_map.csv
+                    </a> — includes LeadTime &le; 0
+                  </li>
+                  <li>
+                    <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/sample_results.json" target="_blank" rel="noopener noreferrer">
+                      sample_results.json
+                    </a> — pre-generated validation results showing all 36 detected issues
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* ── 4. Running the Tool ─────────────────────── */}
@@ -552,6 +611,19 @@ export function LocalGuide() {
                   re-generate key.scaf from the local tool.
                 </p>
               </div>
+            </div>
+
+            <div className="guide-note">
+              Want to see what every type of error looks like? Download the{" "}
+              <a href="https://github.com/dahliaki04/SCAFFOLD/tree/main/demo/sample_errors" target="_blank" rel="noopener noreferrer">
+                error demo files
+              </a>{" "}
+              and run them through SCAFFOLD.
+              The{" "}
+              <a href="https://github.com/dahliaki04/SCAFFOLD/blob/main/demo/sample_errors/sample_results.json" target="_blank" rel="noopener noreferrer">
+                sample_results.json
+              </a>{" "}
+              shows the full output with 36 detected issues across all error categories.
             </div>
           </div>
         </section>
