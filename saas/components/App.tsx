@@ -10,6 +10,8 @@ import { useState } from "react";
 import { ScaffoldProvider, useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { GraphView } from "./GraphView";
 import { SankeyView } from "./SankeyView";
+import { DiffView } from "./DiffView";
+import { DeltaMetrics } from "./DeltaMetrics";
 import { SearchBar } from "./SearchBar";
 import { StageFilter } from "./StageFilter";
 import { SiteFilter } from "./SiteFilter";
@@ -23,7 +25,7 @@ import { Landing } from "./Landing";
 import { LocalGuide } from "./LocalGuide";
 
 function AppContent() {
-  const { loaded, data, viewMode, restored, page } = useScaffold();
+  const { loaded, data, viewMode, restored, page, diffResult } = useScaffold();
   const dispatch = useDispatch();
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -37,6 +39,7 @@ function AppContent() {
 
   const nodeCount = data ? Object.keys(data.nodes).length : 0;
   const edgeCount = data ? data.edges.length : 0;
+  const isDiffMode = viewMode === "diff" && diffResult !== null;
 
   return (
     <div className="app-container">
@@ -62,6 +65,14 @@ function AppContent() {
           >
             Sankey
           </button>
+          {diffResult && (
+            <button
+              className={viewMode === "diff" ? "active" : ""}
+              onClick={() => dispatch({ type: "SET_VIEW", payload: "diff" })}
+            >
+              Diff
+            </button>
+          )}
         </div>
 
         {/* Stats */}
@@ -73,7 +84,9 @@ function AppContent() {
             Edges: <span className="stat-value">{edgeCount}</span>
           </div>
           <div className="stat">
-            {restored ? (
+            {isDiffMode ? (
+              <span style={{ color: "#F59E0B" }}>Diff View</span>
+            ) : restored ? (
               <span style={{ color: "var(--success)" }}>Labels Restored</span>
             ) : (
               <span style={{ color: "var(--warning)" }}>Masked View</span>
@@ -98,19 +111,33 @@ function AppContent() {
             <h3>Search</h3>
             <SearchBar />
           </div>
-          <ProductList />
-          <SupplierImpactView />
+          {isDiffMode ? (
+            /* Diff-specific sidebar panels */
+            <DeltaMetrics />
+          ) : (
+            /* Standard sidebar panels */
+            <>
+              <ProductList />
+              <SupplierImpactView />
+            </>
+          )}
           <StageFilter />
           <SiteFilter />
           <DepthFilter />
-          <NodeSizeToggle />
+          {!isDiffMode && <NodeSizeToggle />}
           <KeyRestore />
-          <ExportPanel />
+          {!isDiffMode && <ExportPanel />}
         </div>
 
         {/* Main view */}
         <div className="main-view">
-          {viewMode === "graph" ? <GraphView /> : <SankeyView />}
+          {viewMode === "diff" ? (
+            <DiffView />
+          ) : viewMode === "sankey" ? (
+            <SankeyView />
+          ) : (
+            <GraphView />
+          )}
         </div>
       </div>
     </div>

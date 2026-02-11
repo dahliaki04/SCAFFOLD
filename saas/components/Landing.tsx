@@ -8,6 +8,7 @@
 import { useState, useCallback, useRef } from "react";
 import { useScaffold, useDispatch } from "../context/ScaffoldContext";
 import { parseScaffoldJSON, ParseError } from "../lib/parser";
+import type { ScaffoldJSON } from "../types";
 
 /* ── SVG Icon Components ────────────────────────────────────────── */
 
@@ -132,6 +133,17 @@ export function Landing() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
+  // L2-19: Diff upload state
+  const [baselineDragOver, setBaselineDragOver] = useState(false);
+  const [targetDragOver, setTargetDragOver] = useState(false);
+  const [baselineFile, setBaselineFile] = useState<ScaffoldJSON | null>(null);
+  const [targetFile, setTargetFile] = useState<ScaffoldJSON | null>(null);
+  const [baselineName, setBaselineName] = useState("");
+  const [targetName, setTargetName] = useState("");
+  const [diffError, setDiffError] = useState("");
+  const baselineInputRef = useRef<HTMLInputElement>(null);
+  const targetInputRef = useRef<HTMLInputElement>(null);
+
   const handleFile = useCallback(
     (file: File) => {
       setError("");
@@ -184,6 +196,51 @@ export function Landing() {
     document.getElementById("demo")?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // L2-19: Handle baseline/target file loading for diff
+  const handleDiffFile = useCallback(
+    (file: File, slot: "baseline" | "target") => {
+      setDiffError("");
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = parseScaffoldJSON(reader.result as string);
+          if (slot === "baseline") {
+            setBaselineFile(data);
+            setBaselineName(file.name);
+          } else {
+            setTargetFile(data);
+            setTargetName(file.name);
+          }
+        } catch (err) {
+          setDiffError(
+            err instanceof ParseError ? err.message : "Failed to parse file"
+          );
+        }
+      };
+      reader.readAsText(file);
+    },
+    []
+  );
+
+  const handleDiffDrop = useCallback(
+    (e: React.DragEvent, slot: "baseline" | "target") => {
+      e.preventDefault();
+      if (slot === "baseline") setBaselineDragOver(false);
+      else setTargetDragOver(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleDiffFile(file, slot);
+    },
+    [handleDiffFile]
+  );
+
+  const launchDiff = useCallback(() => {
+    if (!baselineFile || !targetFile) return;
+    dispatch({
+      type: "LOAD_DIFF",
+      payload: { baseline: baselineFile, target: targetFile },
+    });
+  }, [baselineFile, targetFile, dispatch]);
+
   return (
     <div className="landing">
       {/* ── Navigation ─────────────────────────────────── */}
@@ -195,6 +252,7 @@ export function Landing() {
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
             <a href="#demo">Demo</a>
+            <a href="#compare">Compare</a>
             <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
               Guide
             </a>
@@ -632,6 +690,116 @@ export function Landing() {
               {error}
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ── Compare BOMs (L2-19) ─────────────────────────── */}
+      <section className="landing-section" id="compare">
+        <div className="landing-section-inner">
+          <div className="section-header">
+            <h2>Compare two BOMs</h2>
+            <p>
+              Upload a baseline and target upload.json to see what changed —
+              new parts, removed connections, shifted risk levels.
+            </p>
+          </div>
+
+          <div className="diff-upload-row">
+            {/* Baseline drop zone */}
+            <div className="diff-upload-slot">
+              <h4>Baseline</h4>
+              <div
+                className={`diff-drop-zone ${baselineDragOver ? "drag-over" : ""} ${baselineFile ? "loaded" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setBaselineDragOver(true);
+                }}
+                onDragLeave={() => setBaselineDragOver(false)}
+                onDrop={(e) => handleDiffDrop(e, "baseline")}
+                onClick={() => baselineInputRef.current?.click()}
+              >
+                {baselineFile ? (
+                  <>
+                    <span className="diff-slot-check">&#10003;</span>
+                    <span className="diff-slot-name">{baselineName}</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadIcon />
+                    <span>Drop baseline JSON</span>
+                  </>
+                )}
+              </div>
+              <input
+                ref={baselineInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleDiffFile(file, "baseline");
+                }}
+              />
+            </div>
+
+            <div className="diff-upload-arrow">
+              <ArrowRightIcon />
+            </div>
+
+            {/* Target drop zone */}
+            <div className="diff-upload-slot">
+              <h4>Target</h4>
+              <div
+                className={`diff-drop-zone ${targetDragOver ? "drag-over" : ""} ${targetFile ? "loaded" : ""}`}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setTargetDragOver(true);
+                }}
+                onDragLeave={() => setTargetDragOver(false)}
+                onDrop={(e) => handleDiffDrop(e, "target")}
+                onClick={() => targetInputRef.current?.click()}
+              >
+                {targetFile ? (
+                  <>
+                    <span className="diff-slot-check">&#10003;</span>
+                    <span className="diff-slot-name">{targetName}</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadIcon />
+                    <span>Drop target JSON</span>
+                  </>
+                )}
+              </div>
+              <input
+                ref={targetInputRef}
+                type="file"
+                accept=".json"
+                style={{ display: "none" }}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleDiffFile(file, "target");
+                }}
+              />
+            </div>
+          </div>
+
+          {diffError && (
+            <div style={{ color: "var(--danger)", fontSize: 13, marginTop: 8, textAlign: "center" }}>
+              {diffError}
+            </div>
+          )}
+
+          <div style={{ textAlign: "center", marginTop: 16 }}>
+            <button
+              className="btn btn-accent btn-lg"
+              disabled={!baselineFile || !targetFile}
+              onClick={launchDiff}
+            >
+              Compare
+              <ArrowRightIcon />
+            </button>
+          </div>
         </div>
       </section>
 
