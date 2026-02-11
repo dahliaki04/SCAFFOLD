@@ -214,10 +214,11 @@ export function Landing() {
             <span className="hero-accent">BOM hides</span>
           </h1>
           <p className="landing-hero-sub">
-            Every supply chain breaks at its weakest link. SCAFFOLD finds
-            it — single-source parts, lead time bottlenecks, hidden
-            structural risk — all from your BOM topology. Nothing leaves
-            your machine.
+            Orphan parts, circular refs, broken links — small BOM errors
+            that take hours to find and seconds to fix. SCAFFOLD catches
+            them instantly, then visualizes your supply network so you see
+            how products cluster, where suppliers overlap, and which
+            disruption hits the most lines. Runs entirely on your machine.
           </p>
           <div className="landing-hero-actions">
             <button className="btn btn-accent btn-lg" onClick={scrollToDemo}>
