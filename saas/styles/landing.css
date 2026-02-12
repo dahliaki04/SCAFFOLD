@@ -1251,8 +1251,55 @@
   color: var(--accent);
 }
 
+/* Guide Sample Files */
+.guide-sample-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.guide-sample-group h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.guide-sample-group ul {
+  list-style: none;
+  padding: 0;
+}
+
+.guide-sample-group li {
+  padding: 4px 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.guide-sample-group a {
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.guide-sample-group a:hover {
+  text-decoration: underline;
+}
+
+.guide-sample-desc {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
 @media (max-width: 768px) {
   .guide-output-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .guide-sample-links {
     grid-template-columns: 1fr;
   }
 
