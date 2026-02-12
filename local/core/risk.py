@@ -7,6 +7,7 @@ All traversals are iterative (stack-based) — no recursion.
 
 from __future__ import annotations
 
+from collections import deque
 from typing import TYPE_CHECKING
 
 import networkx as nx
@@ -161,10 +162,11 @@ def analyze_supplier_impact(
     # Build reverse graph for upward tracing (child → parent)
     R = G.reverse(copy=True)
 
-    # Map supplier → parts
+    # Map supplier → parts (vectorized — no iterrows)
     supplier_parts: dict[str, set[str]] = {}
-    for _, row in supplier_map_df[["Part", "Supplier"]].drop_duplicates().iterrows():
-        supplier_parts.setdefault(row["Supplier"], set()).add(row["Part"])
+    unique_pairs = supplier_map_df[["Part", "Supplier"]].drop_duplicates()
+    for part, supplier in zip(unique_pairs["Part"], unique_pairs["Supplier"]):
+        supplier_parts.setdefault(supplier, set()).add(part)
 
     # Map part → all (part, site) nodes in graph
     part_nodes: dict[str, list[tuple[str, str]]] = {}
@@ -180,9 +182,9 @@ def analyze_supplier_impact(
             for node in part_nodes.get(part, []):
                 # BFS upward through reverse graph to find reachable end products
                 visited: set[tuple[str, str]] = set()
-                queue = [node]
+                queue: deque[tuple[str, str]] = deque([node])
                 while queue:
-                    current = queue.pop(0)
+                    current = queue.popleft()
                     if current in visited:
                         continue
                     visited.add(current)
@@ -230,9 +232,9 @@ def build_site_dependency_map(
         for node in nodes:
             # BFS upward to find reachable end products
             visited: set[tuple[str, str]] = set()
-            queue = [node]
+            queue: deque[tuple[str, str]] = deque([node])
             while queue:
-                current = queue.pop(0)
+                current = queue.popleft()
                 if current in visited:
                     continue
                 visited.add(current)

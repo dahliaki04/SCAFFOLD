@@ -22,7 +22,8 @@ def apply_jitter(real_val: int) -> int:
     if real_val <= range_val + 1:
         noise = random.randint(1, range_val)
     else:
-        noise = random.choice(
-            [i for i in range(-range_val, range_val + 1) if i != 0]
-        )
+        # Pick from [-range_val, range_val] excluding 0 without building a list.
+        # There are 2*range_val valid choices; map [1, 2*range_val] to that set.
+        raw = random.randint(1, 2 * range_val)
+        noise = raw if raw <= range_val else -(raw - range_val)
     return max(1, real_val + noise)

@@ -163,10 +163,11 @@ export function GraphView() {
       const related = new Set<string>();
       related.add(startNode);
 
-      // BFS upstream (predecessors via in-neighbors)
+      // BFS upstream (predecessors via in-neighbors) — index-based to avoid O(n) shift
       const upQueue = [startNode];
-      while (upQueue.length > 0) {
-        const current = upQueue.shift()!;
+      let upHead = 0;
+      while (upHead < upQueue.length) {
+        const current = upQueue[upHead++];
         graph.forEachInNeighbor(current, (neighbor) => {
           if (!related.has(neighbor)) {
             related.add(neighbor);
@@ -175,10 +176,11 @@ export function GraphView() {
         });
       }
 
-      // BFS downstream (successors via out-neighbors)
+      // BFS downstream (successors via out-neighbors) — index-based
       const downQueue = [startNode];
-      while (downQueue.length > 0) {
-        const current = downQueue.shift()!;
+      let downHead = 0;
+      while (downHead < downQueue.length) {
+        const current = downQueue[downHead++];
         graph.forEachOutNeighbor(current, (neighbor) => {
           if (!related.has(neighbor)) {
             related.add(neighbor);
@@ -198,8 +200,9 @@ export function GraphView() {
       const visited = new Set<string>();
       const queue = [...startNodes];
       for (const n of queue) visited.add(n);
-      while (queue.length > 0) {
-        const current = queue.shift()!;
+      let head = 0;
+      while (head < queue.length) {
+        const current = queue[head++];
         graph.forEachInNeighbor(current, (neighbor) => {
           if (!visited.has(neighbor)) {
             visited.add(neighbor);

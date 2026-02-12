@@ -195,17 +195,14 @@ def main() -> None:
         for c in cycles[:3]:
             print(f"        {c}")
 
-    pm_nodes = {
-        (row["PartNumber"], row["Site"]) for _, row in pm_df.iterrows()
-    }
+    pm_nodes = set(zip(pm_df["PartNumber"], pm_df["Site"]))
     orphans = detect_orphans(G, pm_nodes)
     bom_only = orphans["bom_not_in_parts"]
     if bom_only:
         print(f"      WARNING: {len(bom_only)} BOM refs not in Part Master")
 
-    end_products = set()
-    for _, row in pm_df[pm_df["IsEndProduct"]].iterrows():
-        end_products.add((row["PartNumber"], row["Site"]))
+    ep_mask = pm_df["IsEndProduct"]
+    end_products = set(zip(pm_df.loc[ep_mask, "PartNumber"], pm_df.loc[ep_mask, "Site"]))
     print(f"      {len(end_products)} end products")
 
     # ── Step 4: Generate network summary ─────────────────

@@ -381,12 +381,9 @@ class ScaffoldApp:
             if cycles:
                 self._log(f"      WARNING: {len(cycles)} circular refs!")
 
-            pm_nodes = {
-                (row["PartNumber"], row["Site"]) for _, row in pm_df.iterrows()
-            }
-            end_products = set()
-            for _, row in pm_df[pm_df["IsEndProduct"]].iterrows():
-                end_products.add((row["PartNumber"], row["Site"]))
+            pm_nodes = set(zip(pm_df["PartNumber"], pm_df["Site"]))
+            ep_mask = pm_df["IsEndProduct"]
+            end_products = set(zip(pm_df.loc[ep_mask, "PartNumber"], pm_df.loc[ep_mask, "Site"]))
             self._log(f"      {len(end_products)} end products")
 
             # Summary + reports

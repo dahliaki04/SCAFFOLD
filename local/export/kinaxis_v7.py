@@ -48,19 +48,20 @@ def export_kinaxis_v7(
         best = group.loc[group["LeadTime"].idxmax()]
         primary_supplier[part] = best["Supplier"]
 
-    # Build stage lookup
-    stage_lookup: dict[tuple[str, str], str] = {}
-    for _, row in part_master_df.iterrows():
-        stage_lookup[(row["PartNumber"], row["Site"])] = row.get("Stage", "")
+    # Build stage lookup (vectorized — no iterrows)
+    stage_lookup: dict[tuple[str, str], str] = dict(zip(
+        zip(part_master_df["PartNumber"], part_master_df["Site"]),
+        part_master_df.get("Stage", pd.Series("", index=part_master_df.index)),
+    ))
 
     rows: list[dict] = []
-    for _, row in bom_df.iterrows():
-        child_part = row["ComponentName"]
-        child_site = row["ComponentSite"]
-        parent_part = row["AssemblyName"]
-        parent_site = row["AssemblySite"]
-        qty = row["Qty"]
-
+    for child_part, child_site, parent_part, parent_site, qty in zip(
+        bom_df["ComponentName"],
+        bom_df["ComponentSite"],
+        bom_df["AssemblyName"],
+        bom_df["AssemblySite"],
+        bom_df["Qty"],
+    ):
         activity = assign_activity(child_part, child_site, G)
         lt = max_lt.get(child_part, 0)
         supplier = primary_supplier.get(child_part, "")
