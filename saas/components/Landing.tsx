@@ -179,10 +179,6 @@ export function Landing() {
     }
   }, [dispatch]);
 
-  const scrollToUpload = () => {
-    uploadRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
   // L2-19: Handle baseline/target file loading for diff
   const handleDiffFile = useCallback(
     (file: File, slot: "baseline" | "target") => {
@@ -272,8 +268,8 @@ export function Landing() {
               {demoLoading ? "Loading Demo..." : "Try Semiconductor Demo"}
               <ArrowRightIcon />
             </button>
-            <button className="btn btn-primary btn-lg" onClick={scrollToUpload}>
-              Upload Your Data
+            <button className="btn btn-primary btn-lg" onClick={() => dispatch({ type: "SET_PAGE", payload: "guide" })}>
+              Get the Local Tool — Free
               <ArrowRightIcon />
             </button>
           </div>
@@ -581,8 +577,8 @@ export function Landing() {
                 <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
                 <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
               </ul>
-              <button className="btn btn-outline btn-block" onClick={scrollToUpload}>
-                Get Started
+              <button className="btn btn-outline btn-block" onClick={() => dispatch({ type: "SET_PAGE", payload: "guide" })}>
+                Get the Local Tool
               </button>
             </div>
 
@@ -635,15 +631,64 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Upload CTA ─────────────────────────────────── */}
-      <section className="landing-section section-alt" id="upload" ref={uploadRef}>
+      {/* ── Step 1: Get Local Tool ────────────────────────── */}
+      <section className="landing-section section-alt" id="get-started" ref={uploadRef}>
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Ready to try it?</h2>
+            <h2>Start here — get the free Local Tool</h2>
             <p>
-              Drop your upload.json to launch the viewer. No account, no
-              server — everything runs in your browser and is gone when
-              you close the tab.
+              SCAFFOLD works offline-first. Download the Local Tool, drop in
+              your Excel or CSV, and get validated output plus a structure
+              report — no account, no internet, no data leaves your machine.
+            </p>
+          </div>
+
+          <div className="get-started-steps">
+            <div className="get-started-step">
+              <div className="step-number">1</div>
+              <div>
+                <strong>Download the Local Tool</strong>
+                <p>Portable .exe — no install needed. Runs on Windows 10/11.</p>
+              </div>
+            </div>
+            <div className="get-started-step">
+              <div className="step-number">2</div>
+              <div>
+                <strong>Drop in your BOM data</strong>
+                <p>Excel (.xlsx) or CSV — Part Master, BOM Structure, Supplier Map.</p>
+              </div>
+            </div>
+            <div className="get-started-step">
+              <div className="step-number">3</div>
+              <div>
+                <strong>Get results instantly</strong>
+                <p>validated.xlsx + PDF report. Free tier stops here — full value, zero upload.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ textAlign: "center", marginTop: 24 }}>
+            <button className="btn btn-accent btn-lg" onClick={() => dispatch({ type: "SET_PAGE", payload: "guide" })}>
+              Setup Guide & Download
+              <ArrowRightIcon />
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Step 2: Upload to Viewer (paid tiers) ──────────── */}
+      <section className="landing-section" id="upload">
+        <div className="landing-section-inner">
+          <div className="section-header">
+            <h2>Already have upload.json?</h2>
+            <p>
+              Paid tiers generate a masked upload.json from the Local Tool.
+              Drop it here to launch the interactive viewer — no account, no
+              server, everything runs in your browser.
+            </p>
+            <p style={{ fontSize: 13, opacity: 0.7, marginTop: 8 }}>
+              Don't have this file yet?{" "}
+              <a href="#get-started" style={{ color: "var(--accent)" }}>Start with the free Local Tool above.</a>
             </p>
           </div>
 
