@@ -121,6 +121,7 @@ export function Landing() {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
   const [demoLoading, setDemoLoading] = useState(false);
+  const [compareDemoLoading, setCompareDemoLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
@@ -176,6 +177,25 @@ export function Landing() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load demo");
       setDemoLoading(false);
+    }
+  }, [dispatch]);
+
+  const loadCompareDemo = useCallback(async () => {
+    setCompareDemoLoading(true);
+    setDiffError("");
+    try {
+      const [baseRes, targetRes] = await Promise.all([
+        fetch("/diff_baseline.json"),
+        fetch("/diff_target.json"),
+      ]);
+      if (!baseRes.ok || !targetRes.ok) throw new Error("Failed to fetch comparison samples");
+      const [baseText, targetText] = await Promise.all([baseRes.text(), targetRes.text()]);
+      const baseline = parseScaffoldJSON(baseText);
+      const target = parseScaffoldJSON(targetText);
+      dispatch({ type: "LOAD_DIFF", payload: { baseline, target } });
+    } catch (err) {
+      setDiffError(err instanceof Error ? err.message : "Failed to load comparison demo");
+      setCompareDemoLoading(false);
     }
   }, [dispatch]);
 
@@ -237,8 +257,7 @@ export function Landing() {
           <div className="landing-nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="#pricing">Pricing</a>
-            <a href="#compare">Compare</a>
+            <a href="#start-here">Get the Local Tool — Free</a>
             <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
               Guide
             </a>
@@ -470,6 +489,126 @@ export function Landing() {
               </div>
             </div>
           </div>
+
+          {/* ── Compare BOMs (L2-19) — secondary demo action ── */}
+          <div className="demo-divider">
+            <span>or</span>
+          </div>
+
+          <div className="demo-compare">
+            <h3>Compare two BOMs</h3>
+            <p>
+              See what changed between a baseline and target —
+              new parts, removed connections, shifted risk levels.
+            </p>
+            <div className="demo-compare-actions">
+              <button className="btn btn-accent btn-lg" onClick={loadCompareDemo} disabled={compareDemoLoading}>
+                {compareDemoLoading ? "Loading..." : "Load Comparison Demo"}
+                <ArrowRightIcon />
+              </button>
+            </div>
+
+            <div className="demo-compare-or">
+              <span>or upload your own</span>
+            </div>
+
+            <div className="diff-upload-row">
+              {/* Baseline drop zone */}
+              <div className="diff-upload-slot">
+                <h4>Baseline</h4>
+                <div
+                  className={`diff-drop-zone ${baselineDragOver ? "drag-over" : ""} ${baselineFile ? "loaded" : ""}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setBaselineDragOver(true);
+                  }}
+                  onDragLeave={() => setBaselineDragOver(false)}
+                  onDrop={(e) => handleDiffDrop(e, "baseline")}
+                  onClick={() => baselineInputRef.current?.click()}
+                >
+                  {baselineFile ? (
+                    <>
+                      <span className="diff-slot-check">&#10003;</span>
+                      <span className="diff-slot-name">{baselineName}</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadIcon />
+                      <span>Drop baseline JSON</span>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={baselineInputRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleDiffFile(file, "baseline");
+                  }}
+                />
+              </div>
+
+              <div className="diff-upload-arrow">
+                <ArrowRightIcon />
+              </div>
+
+              {/* Target drop zone */}
+              <div className="diff-upload-slot">
+                <h4>Target</h4>
+                <div
+                  className={`diff-drop-zone ${targetDragOver ? "drag-over" : ""} ${targetFile ? "loaded" : ""}`}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setTargetDragOver(true);
+                  }}
+                  onDragLeave={() => setTargetDragOver(false)}
+                  onDrop={(e) => handleDiffDrop(e, "target")}
+                  onClick={() => targetInputRef.current?.click()}
+                >
+                  {targetFile ? (
+                    <>
+                      <span className="diff-slot-check">&#10003;</span>
+                      <span className="diff-slot-name">{targetName}</span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadIcon />
+                      <span>Drop target JSON</span>
+                    </>
+                  )}
+                </div>
+                <input
+                  ref={targetInputRef}
+                  type="file"
+                  accept=".json"
+                  style={{ display: "none" }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleDiffFile(file, "target");
+                  }}
+                />
+              </div>
+            </div>
+
+            {diffError && (
+              <div style={{ color: "var(--danger)", fontSize: 13, marginTop: 8, textAlign: "center" }}>
+                {diffError}
+              </div>
+            )}
+
+            <div style={{ textAlign: "center", marginTop: 16 }}>
+              <button
+                className="btn btn-accent btn-lg"
+                disabled={!baselineFile || !targetFile}
+                onClick={launchDiff}
+              >
+                Compare
+                <ArrowRightIcon />
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -555,88 +694,59 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Pricing ────────────────────────────────────── */}
-      <section className="landing-section" id="pricing">
+      {/* ── Pricing — hidden during friend-testing phase ─── */}
+      {/* TODO: Uncomment when ready to show pricing tiers */}
+
+      {/* ── Start Here — Free Local Tool ────────────────── */}
+      <section className="landing-section section-alt" id="start-here">
         <div className="landing-section-inner">
           <div className="section-header">
-            <h2>Simple, transparent pricing</h2>
-            <p>Start free. Upgrade when you need more.</p>
+            <h2>Start here — get the free Local Tool</h2>
+            <p>
+              Download the portable desktop tool. Validate your BOM, compute
+              risk metrics, and generate reports — fully offline, zero internet
+              required. No account needed.
+            </p>
           </div>
-          <div className="pricing-grid">
-            {/* Free */}
-            <div className="pricing-card">
-              <div className="pricing-tier">Taste</div>
-              <div className="pricing-price">
-                $0<span>/forever</span>
-              </div>
-              <div className="pricing-desc">
-                Validate, sort, and fix your BOM in place.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
-                <li><span className="check"><CheckIcon /></span> Up to 2,000 BOM rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF report</li>
-                <li><span className="cross"><CrossIcon /></span> upload.json generation</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
-                <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
-              </ul>
-              <button className="btn btn-outline btn-block" onClick={scrollToUpload}>
-                Get Started
-              </button>
+          <div className="start-here-grid">
+            <div className="start-here-card">
+              <h3>1. Download</h3>
+              <p>
+                Grab the latest SCAFFOLD release (.zip) and extract it anywhere
+                on your Windows machine. No installer — just unzip and run.
+              </p>
             </div>
-
-            {/* Scope — Coming Soon */}
-            <div className="pricing-card pricing-coming-soon">
-              <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Scope</div>
-              <div className="pricing-price">
-                $19.9<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                See the full picture. No limits.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF report</li>
-                <li><span className="check"><CheckIcon /></span> upload.json generation</li>
-                <li><span className="check"><CheckIcon /></span> SaaS masked browse</li>
-                <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf / label restore</li>
-              </ul>
-              <button className="btn btn-outline btn-block" disabled>
-                Coming Soon
-              </button>
+            <div className="start-here-card">
+              <h3>2. Prepare your data</h3>
+              <p>
+                Open your Excel workbook with three tabs: <strong>Part Master</strong>,{" "}
+                <strong>BOM Structure</strong>, and <strong>Supplier Map</strong>.
+                Column names must match the V4 Schema.
+              </p>
             </div>
-
-            {/* Deliver — Coming Soon */}
-            <div className="pricing-card pricing-coming-soon">
-              <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Deliver</div>
-              <div className="pricing-price">
-                $39.9<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                Present to clients. Own the deliverable.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Scope</li>
-                <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
-                <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
-                <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
-                <li><span className="check"><CheckIcon /></span> Export plugins (Kinaxis, CSV)</li>
-              </ul>
-              <button className="btn btn-outline btn-block" disabled>
-                Coming Soon
-              </button>
+            <div className="start-here-card">
+              <h3>3. Run</h3>
+              <p>
+                Launch <code>SCAFFOLD.exe</code>, select your file, and click Run.
+                You get <code>validated.xlsx</code> (errors highlighted) and{" "}
+                <code>report.pdf</code> (network summary) instantly.
+              </p>
             </div>
+          </div>
+          <div style={{ textAlign: "center", marginTop: 24 }}>
+            <button
+              className="btn btn-outline"
+              onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}
+            >
+              Read the full Guide
+              <ArrowRightIcon />
+            </button>
           </div>
         </div>
       </section>
 
       {/* ── Upload CTA ─────────────────────────────────── */}
-      <section className="landing-section section-alt" id="upload" ref={uploadRef}>
+      <section className="landing-section" id="upload" ref={uploadRef}>
         <div className="landing-section-inner">
           <div className="section-header">
             <h2>Ready to try it?</h2>
@@ -676,122 +786,6 @@ export function Landing() {
               {error}
             </div>
           )}
-        </div>
-      </section>
-
-      {/* ── Compare BOMs (L2-19) ─────────────────────────── */}
-      <section className="landing-section" id="compare">
-        <div className="landing-section-inner">
-          <div className="section-header">
-            <h2>Compare two BOMs</h2>
-            <p>
-              Upload a baseline and target upload.json to see what changed —
-              new parts, removed connections, shifted risk levels.
-            </p>
-            <p className="compare-sample-hint">
-              No files yet? Try with our samples:{" "}
-              <a href="/diff_baseline.json" download="diff_baseline.json">baseline.json</a>
-              {" & "}
-              <a href="/diff_target.json" download="diff_target.json">target.json</a>
-            </p>
-          </div>
-
-          <div className="diff-upload-row">
-            {/* Baseline drop zone */}
-            <div className="diff-upload-slot">
-              <h4>Baseline</h4>
-              <div
-                className={`diff-drop-zone ${baselineDragOver ? "drag-over" : ""} ${baselineFile ? "loaded" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setBaselineDragOver(true);
-                }}
-                onDragLeave={() => setBaselineDragOver(false)}
-                onDrop={(e) => handleDiffDrop(e, "baseline")}
-                onClick={() => baselineInputRef.current?.click()}
-              >
-                {baselineFile ? (
-                  <>
-                    <span className="diff-slot-check">&#10003;</span>
-                    <span className="diff-slot-name">{baselineName}</span>
-                  </>
-                ) : (
-                  <>
-                    <UploadIcon />
-                    <span>Drop baseline JSON</span>
-                  </>
-                )}
-              </div>
-              <input
-                ref={baselineInputRef}
-                type="file"
-                accept=".json"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleDiffFile(file, "baseline");
-                }}
-              />
-            </div>
-
-            <div className="diff-upload-arrow">
-              <ArrowRightIcon />
-            </div>
-
-            {/* Target drop zone */}
-            <div className="diff-upload-slot">
-              <h4>Target</h4>
-              <div
-                className={`diff-drop-zone ${targetDragOver ? "drag-over" : ""} ${targetFile ? "loaded" : ""}`}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setTargetDragOver(true);
-                }}
-                onDragLeave={() => setTargetDragOver(false)}
-                onDrop={(e) => handleDiffDrop(e, "target")}
-                onClick={() => targetInputRef.current?.click()}
-              >
-                {targetFile ? (
-                  <>
-                    <span className="diff-slot-check">&#10003;</span>
-                    <span className="diff-slot-name">{targetName}</span>
-                  </>
-                ) : (
-                  <>
-                    <UploadIcon />
-                    <span>Drop target JSON</span>
-                  </>
-                )}
-              </div>
-              <input
-                ref={targetInputRef}
-                type="file"
-                accept=".json"
-                style={{ display: "none" }}
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleDiffFile(file, "target");
-                }}
-              />
-            </div>
-          </div>
-
-          {diffError && (
-            <div style={{ color: "var(--danger)", fontSize: 13, marginTop: 8, textAlign: "center" }}>
-              {diffError}
-            </div>
-          )}
-
-          <div style={{ textAlign: "center", marginTop: 16 }}>
-            <button
-              className="btn btn-accent btn-lg"
-              disabled={!baselineFile || !targetFile}
-              onClick={launchDiff}
-            >
-              Compare
-              <ArrowRightIcon />
-            </button>
-          </div>
         </div>
       </section>
 
