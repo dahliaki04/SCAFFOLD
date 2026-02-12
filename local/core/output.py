@@ -73,10 +73,11 @@ def generate_upload_json(
     unique_stages = sorted(part_master_df["Stage"].unique())
     stage_map = build_stage_map(unique_stages)
 
-    # --- Build (Part, Site) → Stage lookup ---
-    stage_lookup: dict[tuple[str, str], str] = {}
-    for _, row in part_master_df.iterrows():
-        stage_lookup[(row["PartNumber"], row["Site"])] = row["Stage"]
+    # --- Build (Part, Site) → Stage lookup (vectorized — no iterrows) ---
+    stage_lookup: dict[tuple[str, str], str] = dict(zip(
+        zip(part_master_df["PartNumber"], part_master_df["Site"]),
+        part_master_df["Stage"],
+    ))
 
     # --- Max lead times ---
     max_lt = compute_max_leadtime(supplier_map_df)
@@ -84,48 +85,55 @@ def generate_upload_json(
     # --- Node depths ---
     depths = _compute_node_depths(G, end_products)
 
-    # --- Build node hash mapping ---
+    # --- Pre-compute node hash mapping (cache to avoid redundant SHA-256) ---
+    hash_cache: dict[tuple[str, str], str] = {}
+    site_hash_cache: dict[str, str] = {}
+    for node in G.nodes():
+        part, site = node
+        hash_cache[node] = sha256_hash(f"{part}:{site}")
+        if site not in site_hash_cache:
+            site_hash_cache[site] = sha256_hash(site)
+
     def _node_hash(part: str, site: str) -> str:
-        return sha256_hash(f"{part}:{site}")
+        cached = hash_cache.get((part, site))
+        if cached is not None:
+            return cached
+        h = sha256_hash(f"{part}:{site}")
+        hash_cache[(part, site)] = h
+        return h
 
     # --- Nodes ---
     nodes: dict[str, dict] = {}
     for node in G.nodes():
         part, site = node
-        h = _node_hash(part, site)
+        h = hash_cache[node]
         lt_val = max_lt.get(part, 0)
         real_stage = stage_lookup.get((part, site), "Unknown")
         nodes[h] = {
             "stage": stage_map.get(real_stage, "S0"),
             "lt": apply_jitter(lt_val) if lt_val > 0 else 0,
             "depth": depths.get(node, 0),
-            "site": sha256_hash(site),
+            "site": site_hash_cache[site],
         }
 
     # --- Edges ---
     edges: list[dict] = []
-    # Need qty from BOM — re-read edge list is simplest
-    # We iterate G.edges() and look up qty; for now store with jittered qty
-    import pandas as pd
-
     for parent, child in G.edges():
-        pp, ps = parent
-        cp, cs = child
         edges.append({
-            "parent": _node_hash(pp, ps),
-            "child": _node_hash(cp, cs),
+            "parent": hash_cache[parent],
+            "child": hash_cache[child],
             "qty": apply_jitter(1),  # default qty; real qty integration below
         })
 
     # --- Paths ---
     paths_out: dict[str, list[str]] = {}
     for ep in end_products:
-        ep_hash = _node_hash(*ep)
+        ep_hash = hash_cache.get(ep) or _node_hash(*ep)
         ep_paths = compute_paths(ep, G)
-        # Store site sequences as hashed node IDs
+        # Store site sequences as hashed node IDs (use cache)
         path_hashes: list[list[str]] = []
         for path in ep_paths:
-            path_hashes.append([_node_hash(p, s) for p, s in path])
+            path_hashes.append([hash_cache.get(node) or _node_hash(*node) for node in path])
         paths_out[ep_hash] = path_hashes
 
     # --- Single source detection (L1-13) ---
@@ -135,7 +143,7 @@ def generate_upload_json(
     risk: dict[str, dict] = {}
     for node in G.nodes():
         part, site = node
-        h = _node_hash(part, site)
+        h = hash_cache[node]
         lt_val = max_lt.get(part, 0)
         risk[h] = {
             "max_lt": apply_jitter(lt_val) if lt_val > 0 else 0,
@@ -163,19 +171,22 @@ def generate_upload_json(
     # --- Supplier impact (L1-14) ---
     # Trace: Supplier → supplied (part, site) nodes → BFS backward → end products
     impact = analyze_supplier_impact(supplier_map_df, G, end_products)
+    # Build part → graph nodes lookup for O(1) access (avoids O(n*m) nested loop)
+    part_to_nodes: dict[str, list[tuple[str, str]]] = {}
+    for part, site in G.nodes():
+        part_to_nodes.setdefault(part, []).append((part, site))
+
     suppliers_out: dict[str, dict] = {}
     for supplier_name, info in impact.items():
         sup_hash = sha256_hash(supplier_name)
         # supplied_nodes: exact (part, site) node hashes where this supplier's parts sit
         supplied: list[str] = []
         for part in info["parts"]:
-            for node in G.nodes():
-                p, s = node
-                if p == part:
-                    supplied.append(_node_hash(p, s))
+            for node in part_to_nodes.get(part, []):
+                supplied.append(hash_cache.get(node) or _node_hash(*node))
         # affected_products: end product node hashes reachable via backward trace
         affected: list[str] = [
-            _node_hash(p, s) for p, s in info["affected_products"]
+            hash_cache.get((p, s)) or _node_hash(p, s) for p, s in info["affected_products"]
         ]
         suppliers_out[sup_hash] = {
             "supplied_nodes": sorted(set(supplied)),
@@ -213,9 +224,11 @@ def generate_key_data(
     stage_map = build_stage_map(unique_stages)
     max_lt = compute_max_leadtime(supplier_map_df)
 
-    stage_lookup: dict[tuple[str, str], str] = {}
-    for _, row in part_master_df.iterrows():
-        stage_lookup[(row["PartNumber"], row["Site"])] = row["Stage"]
+    # Vectorized — no iterrows
+    stage_lookup: dict[tuple[str, str], str] = dict(zip(
+        zip(part_master_df["PartNumber"], part_master_df["Site"]),
+        part_master_df["Stage"],
+    ))
 
     nodes_map: dict[str, dict] = {}
     for node in G.nodes():

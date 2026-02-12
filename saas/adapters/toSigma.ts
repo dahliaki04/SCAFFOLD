@@ -159,10 +159,11 @@ function computeReachable(
     children.get(edge.parent)!.push(edge.child);
   }
 
-  // BFS
+  // BFS (index-based to avoid O(n) shift)
   const queue = [startId];
-  while (queue.length > 0) {
-    const current = queue.shift()!;
+  let head = 0;
+  while (head < queue.length) {
+    const current = queue[head++];
     if (reachable.has(current)) continue;
     reachable.add(current);
     for (const child of children.get(current) ?? []) {

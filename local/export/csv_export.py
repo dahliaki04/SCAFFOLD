@@ -45,18 +45,20 @@ def export_generic_csv(
     max_lt = compute_max_leadtime(supplier_map_df)
     single_src = detect_single_source(supplier_map_df)
 
-    # Build lookups
-    stage_lookup: dict[tuple[str, str], str] = {}
-    is_ep_lookup: dict[tuple[str, str], bool] = {}
-    for _, row in part_master_df.iterrows():
-        key = (row["PartNumber"], row["Site"])
-        stage_lookup[key] = row.get("Stage", "")
-        is_ep_lookup[key] = bool(row.get("IsEndProduct", False))
+    # Build lookups (vectorized — no iterrows)
+    stage_lookup: dict[tuple[str, str], str] = dict(zip(
+        zip(part_master_df["PartNumber"], part_master_df["Site"]),
+        part_master_df.get("Stage", pd.Series("", index=part_master_df.index)),
+    ))
+    is_ep_lookup: dict[tuple[str, str], bool] = dict(zip(
+        zip(part_master_df["PartNumber"], part_master_df["Site"]),
+        part_master_df.get("IsEndProduct", pd.Series(False, index=part_master_df.index)).astype(bool),
+    ))
 
-    # Supplier list per part
+    # Supplier list per part (vectorized — no iterrows)
     suppliers_by_part: dict[str, list[str]] = {}
-    for _, row in supplier_map_df.iterrows():
-        suppliers_by_part.setdefault(row["Part"], []).append(row["Supplier"])
+    for part, supplier in zip(supplier_map_df["Part"], supplier_map_df["Supplier"]):
+        suppliers_by_part.setdefault(part, []).append(supplier)
 
     # Compute depths via BFS from end products
     import networkx as nx
