@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate demo diff data for L2-19 BOM comparison feature.
 
-Scenario: "6 months later — GPU line technology upgrade"
+Scenario 1: "GPU line technology upgrade"
   Baseline: Current demo BOM (6 end products, semiconductor supply chain)
   Target:   Modified BOM after mid-path component swap:
     - REMOVED: GPU-INTERPOSER@OSAT-MY replaced by new CoWoS bridge technology
@@ -11,8 +11,18 @@ Scenario: "6 months later — GPU line technology upgrade"
     - MODIFIED: MICROBUMP qty increased (higher density design)
     - MODIFIED: PHOTORESIST qty increased (more layers)
 
-  No end products are added or removed — the change is a mid-path
-  component substitution within the existing GPU supply chain.
+Scenario 2: "MOD-WIFI-6 assembly relocates OSAT-MY → OSAT-CN (re-shoring)"
+  Product site switch with local sourcing at the new site:
+    - REMOVED: MOD-WIFI-6@OSAT-MY and all OSAT-MY component nodes
+              (DIE-WIFI, DIE-BT, FILTER-BAW, AIP-SUBSTRATE)
+    - REMOVED: All edges from OSAT-MY assembly flow
+    - ADDED:   MOD-WIFI-6@OSAT-CN (new assembly point)
+    - ADDED:   Re-sourced components at OSAT-CN (DIE-WIFI, DIE-BT,
+              FILTER-BAW, AIP-SUBSTRATE)
+    - ADDED:   EMI-SHIELD@OSAT-CN (extra local sourcing — new component
+              required for CN regulatory compliance, not in original BOM)
+    - ADDED:   New local suppliers (BROADCOM-CN, ESPRESSIF, MURATA-CN,
+              SHENNAN-CIRCUITS, LAIRD-CN)
 
 Uses the same SHA-256 hashing as the real SCAFFOLD pipeline (L1-16).
 """
@@ -158,6 +168,176 @@ def main():
             edge["qty"] = 5
 
     # ─────────────────────────────────────────────────────
+    # CASE 2: Site switch — MOD-WIFI-6 assembly OSAT-MY → OSAT-CN
+    # (Re-shoring: relocate assembly, add extra local sourcing)
+    # ─────────────────────────────────────────────────────
+
+    # --- Hashes for existing MOD-WIFI-6 nodes at OSAT-MY ---
+    wifi_ep_hash = node_hash("MOD-WIFI-6", "DC-US")
+    wifi_ft_hash = node_hash("MOD-WIFI-6", "FT-SG")
+    wifi_osat_my_hash = node_hash("MOD-WIFI-6", "OSAT-MY")
+    die_wifi_my_hash = node_hash("DIE-WIFI", "OSAT-MY")
+    die_bt_my_hash = node_hash("DIE-BT", "OSAT-MY")
+    filter_baw_my_hash = node_hash("FILTER-BAW", "OSAT-MY")
+    aip_sub_my_hash = node_hash("AIP-SUBSTRATE", "OSAT-MY")
+
+    # --- Hashes for new nodes at OSAT-CN ---
+    wifi_osat_cn_hash = node_hash("MOD-WIFI-6", "OSAT-CN")
+    die_wifi_cn_hash = node_hash("DIE-WIFI", "OSAT-CN")
+    die_bt_cn_hash = node_hash("DIE-BT", "OSAT-CN")
+    filter_baw_cn_hash = node_hash("FILTER-BAW", "OSAT-CN")
+    aip_sub_cn_hash = node_hash("AIP-SUBSTRATE", "OSAT-CN")
+    emi_shield_cn_hash = node_hash("EMI-SHIELD", "OSAT-CN")
+
+    osat_cn_site_hash = site_hash("OSAT-CN")
+
+    # --- REMOVE: Old OSAT-MY assembly flow ---
+    # All 5 nodes are exclusive to MOD-WIFI-6 at OSAT-MY
+    removed_my_hashes = {
+        wifi_osat_my_hash, die_wifi_my_hash, die_bt_my_hash,
+        filter_baw_my_hash, aip_sub_my_hash,
+    }
+    for h in removed_my_hashes:
+        target["nodes"].pop(h, None)
+        target["risk"].pop(h, None)
+
+    # Remove all edges referencing the old OSAT-MY nodes
+    target["edges"] = [
+        e for e in target["edges"]
+        if e["parent"] not in removed_my_hashes
+        and e["child"] not in removed_my_hashes
+    ]
+
+    # --- ADD: New assembly point at OSAT-CN ---
+    target["nodes"][wifi_osat_cn_hash] = {
+        "stage": "S1", "lt": 0, "depth": 2, "site": osat_cn_site_hash,
+    }
+    target["risk"][wifi_osat_cn_hash] = {
+        "max_lt": 0, "single_source": False, "depth": 2,
+    }
+
+    # --- ADD: Re-sourced components at OSAT-CN ---
+    # DIE-WIFI: local distributor, slightly shorter LT than MY (was ~56)
+    target["nodes"][die_wifi_cn_hash] = {
+        "stage": "S1", "lt": 48, "depth": 3, "site": osat_cn_site_hash,
+    }
+    target["risk"][die_wifi_cn_hash] = {
+        "max_lt": 48, "single_source": False, "depth": 3,
+    }
+
+    # DIE-BT: local alternative (Espressif) — resolves single-source risk!
+    target["nodes"][die_bt_cn_hash] = {
+        "stage": "S1", "lt": 22, "depth": 3, "site": osat_cn_site_hash,
+    }
+    target["risk"][die_bt_cn_hash] = {
+        "max_lt": 22, "single_source": False, "depth": 3,
+    }
+
+    # FILTER-BAW: local sourcing
+    target["nodes"][filter_baw_cn_hash] = {
+        "stage": "S1", "lt": 20, "depth": 3, "site": osat_cn_site_hash,
+    }
+    target["risk"][filter_baw_cn_hash] = {
+        "max_lt": 20, "single_source": False, "depth": 3,
+    }
+
+    # AIP-SUBSTRATE: local PCB manufacturer (single source initially)
+    target["nodes"][aip_sub_cn_hash] = {
+        "stage": "S1", "lt": 30, "depth": 3, "site": osat_cn_site_hash,
+    }
+    target["risk"][aip_sub_cn_hash] = {
+        "max_lt": 30, "single_source": True, "depth": 3,
+    }
+
+    # EMI-SHIELD: extra local sourcing — new component for CN compliance
+    # (not in baseline BOM at all — required at OSAT-CN only)
+    target["nodes"][emi_shield_cn_hash] = {
+        "stage": "S1", "lt": 12, "depth": 3, "site": osat_cn_site_hash,
+    }
+    target["risk"][emi_shield_cn_hash] = {
+        "max_lt": 12, "single_source": True, "depth": 3,
+    }
+
+    # --- ADD: New edges at OSAT-CN ---
+    # Transfer: FT-SG → OSAT-CN (replaces FT-SG → OSAT-MY)
+    target["edges"].append({
+        "parent": wifi_ft_hash, "child": wifi_osat_cn_hash, "qty": 2,
+    })
+    # Assembly: OSAT-CN → components
+    target["edges"].append({
+        "parent": wifi_osat_cn_hash, "child": die_wifi_cn_hash, "qty": 4,
+    })
+    target["edges"].append({
+        "parent": wifi_osat_cn_hash, "child": die_bt_cn_hash, "qty": 3,
+    })
+    target["edges"].append({
+        "parent": wifi_osat_cn_hash, "child": filter_baw_cn_hash, "qty": 3,
+    })
+    target["edges"].append({
+        "parent": wifi_osat_cn_hash, "child": aip_sub_cn_hash, "qty": 2,
+    })
+    target["edges"].append({
+        "parent": wifi_osat_cn_hash, "child": emi_shield_cn_hash, "qty": 1,
+    })
+
+    # --- UPDATE: Paths for MOD-WIFI-6 ---
+    if wifi_ep_hash in target["paths"]:
+        # Keep paths that don't go through old OSAT-MY, remove ones that do
+        new_paths = [
+            path for path in target["paths"][wifi_ep_hash]
+            if wifi_osat_my_hash not in path
+        ]
+        # Add new paths through OSAT-CN (including EMI-SHIELD — new)
+        for leaf_hash in [die_wifi_cn_hash, die_bt_cn_hash,
+                          filter_baw_cn_hash, aip_sub_cn_hash,
+                          emi_shield_cn_hash]:
+            new_paths.append([
+                wifi_ep_hash, wifi_ft_hash, wifi_osat_cn_hash, leaf_hash,
+            ])
+        target["paths"][wifi_ep_hash] = new_paths
+
+    # --- UPDATE: Suppliers ---
+    # Remove old OSAT-MY node references from existing suppliers
+    for sup_hash, sup_info in target["suppliers"].items():
+        sup_info["supplied_nodes"] = [
+            n for n in sup_info["supplied_nodes"]
+            if n not in removed_my_hashes
+        ]
+
+    # Clean up suppliers left with empty supplied_nodes
+    target["suppliers"] = {
+        k: v for k, v in target["suppliers"].items()
+        if v["supplied_nodes"]
+    }
+
+    # Add new local suppliers for OSAT-CN components
+    target["suppliers"][sha256_hash("BROADCOM-CN")] = {
+        "supplied_nodes": [die_wifi_cn_hash],
+        "affected_products": [wifi_ep_hash],
+        "impact_count": 1,
+    }
+    target["suppliers"][sha256_hash("ESPRESSIF")] = {
+        "supplied_nodes": [die_bt_cn_hash],
+        "affected_products": [wifi_ep_hash],
+        "impact_count": 1,
+    }
+    target["suppliers"][sha256_hash("MURATA-CN")] = {
+        "supplied_nodes": [filter_baw_cn_hash],
+        "affected_products": [wifi_ep_hash],
+        "impact_count": 1,
+    }
+    target["suppliers"][sha256_hash("SHENNAN-CIRCUITS")] = {
+        "supplied_nodes": [aip_sub_cn_hash],
+        "affected_products": [wifi_ep_hash],
+        "impact_count": 1,
+    }
+    target["suppliers"][sha256_hash("LAIRD-CN")] = {
+        "supplied_nodes": [emi_shield_cn_hash],
+        "affected_products": [wifi_ep_hash],
+        "impact_count": 1,
+    }
+
+    # ─────────────────────────────────────────────────────
     # Write output files
     # ─────────────────────────────────────────────────────
     baseline_path = os.path.join(demo_dir, "diff_baseline.json")
@@ -187,11 +367,17 @@ def main():
             modified += 1
 
     print(f"\nDiff summary:")
-    print(f"  Added:     {len(added)} node(s) (COWOS-BRIDGE replaces GPU-INTERPOSER)")
-    print(f"  Removed:   {len(removed)} node(s) (GPU-INTERPOSER discontinued)")
-    print(f"  Modified:  {modified} node(s) (lead time / attribute changes)")
+    print(f"  Added:     {len(added)} node(s)")
+    print(f"  Removed:   {len(removed)} node(s)")
+    print(f"  Modified:  {modified} node(s)")
     print(f"  Unchanged: {len(common) - modified} node(s)")
     print(f"  Products:  {len(baseline['paths'])} → {len(target['paths'])} (no change)")
+    print(f"\nCase 1 — GPU tech upgrade:")
+    print(f"  GPU-INTERPOSER@OSAT-MY removed → COWOS-BRIDGE@OSAT-MY added")
+    print(f"  GPU-UNDERFILL LT decreased, PHOTOMASK-EUV LT increased")
+    print(f"\nCase 2 — MOD-WIFI-6 site switch (OSAT-MY → OSAT-CN):")
+    print(f"  5 nodes removed (OSAT-MY assembly flow)")
+    print(f"  6 nodes added (OSAT-CN assembly + EMI-SHIELD extra sourcing)")
 
 
 if __name__ == "__main__":
