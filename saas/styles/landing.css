@@ -771,9 +771,18 @@
   margin: 0 auto;
 }
 
-.demo-compare .compare-sample-hint {
-  margin-top: 6px;
+.demo-compare-actions {
+  margin-top: 20px;
   margin-bottom: 0;
+}
+
+.demo-compare-or {
+  margin: 24px 0 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
 }
 
 /* ── Nav Active Link ─────────────────────────────────── */

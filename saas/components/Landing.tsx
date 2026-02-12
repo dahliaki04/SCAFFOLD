@@ -121,6 +121,7 @@ export function Landing() {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState("");
   const [demoLoading, setDemoLoading] = useState(false);
+  const [compareDemoLoading, setCompareDemoLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLDivElement>(null);
 
@@ -176,6 +177,25 @@ export function Landing() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load demo");
       setDemoLoading(false);
+    }
+  }, [dispatch]);
+
+  const loadCompareDemo = useCallback(async () => {
+    setCompareDemoLoading(true);
+    setDiffError("");
+    try {
+      const [baseRes, targetRes] = await Promise.all([
+        fetch("/diff_baseline.json"),
+        fetch("/diff_target.json"),
+      ]);
+      if (!baseRes.ok || !targetRes.ok) throw new Error("Failed to fetch comparison samples");
+      const [baseText, targetText] = await Promise.all([baseRes.text(), targetRes.text()]);
+      const baseline = parseScaffoldJSON(baseText);
+      const target = parseScaffoldJSON(targetText);
+      dispatch({ type: "LOAD_DIFF", payload: { baseline, target } });
+    } catch (err) {
+      setDiffError(err instanceof Error ? err.message : "Failed to load comparison demo");
+      setCompareDemoLoading(false);
     }
   }, [dispatch]);
 
@@ -479,15 +499,19 @@ export function Landing() {
           <div className="demo-compare">
             <h3>Compare two BOMs</h3>
             <p>
-              Upload a baseline and target upload.json to see what changed —
+              See what changed between a baseline and target —
               new parts, removed connections, shifted risk levels.
             </p>
-            <p className="compare-sample-hint">
-              No files yet? Try with our samples:{" "}
-              <a href="/diff_baseline.json" download="diff_baseline.json">baseline.json</a>
-              {" & "}
-              <a href="/diff_target.json" download="diff_target.json">target.json</a>
-            </p>
+            <div className="demo-compare-actions">
+              <button className="btn btn-accent btn-lg" onClick={loadCompareDemo} disabled={compareDemoLoading}>
+                {compareDemoLoading ? "Loading..." : "Load Comparison Demo"}
+                <ArrowRightIcon />
+              </button>
+            </div>
+
+            <div className="demo-compare-or">
+              <span>or upload your own</span>
+            </div>
 
             <div className="diff-upload-row">
               {/* Baseline drop zone */}
