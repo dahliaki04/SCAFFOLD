@@ -257,7 +257,6 @@ export function Landing() {
           <div className="landing-nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="#pricing">Pricing</a>
             <a href="#start-here">Get the Local Tool — Free</a>
             <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
               Guide
@@ -695,85 +694,8 @@ export function Landing() {
         </div>
       </section>
 
-      {/* ── Pricing ────────────────────────────────────── */}
-      <section className="landing-section" id="pricing">
-        <div className="landing-section-inner">
-          <div className="section-header">
-            <h2>Simple, transparent pricing</h2>
-            <p>Start free. Upgrade when you need more.</p>
-          </div>
-          <div className="pricing-grid">
-            {/* Free */}
-            <div className="pricing-card">
-              <div className="pricing-tier">Taste</div>
-              <div className="pricing-price">
-                $0<span>/forever</span>
-              </div>
-              <div className="pricing-desc">
-                Validate, sort, and fix your BOM in place.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Up to 5 end products</li>
-                <li><span className="check"><CheckIcon /></span> Up to 2,000 BOM rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF report</li>
-                <li><span className="cross"><CrossIcon /></span> upload.json generation</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
-                <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
-              </ul>
-              <a className="btn btn-outline btn-block" href="#start-here">
-                Get the Local Tool — Free
-              </a>
-            </div>
-
-            {/* Scope — Coming Soon */}
-            <div className="pricing-card pricing-coming-soon">
-              <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Scope</div>
-              <div className="pricing-price">
-                $19.9<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                See the full picture. No limits.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Unlimited products & rows</li>
-                <li><span className="check"><CheckIcon /></span> validated.xlsx output</li>
-                <li><span className="check"><CheckIcon /></span> PDF report</li>
-                <li><span className="check"><CheckIcon /></span> upload.json generation</li>
-                <li><span className="check"><CheckIcon /></span> SaaS masked browse</li>
-                <li><span className="check"><CheckIcon /></span> Rasterized PDF export</li>
-                <li><span className="cross"><CrossIcon /></span> key.scaf / label restore</li>
-              </ul>
-              <button className="btn btn-outline btn-block" disabled>
-                Coming Soon
-              </button>
-            </div>
-
-            {/* Deliver — Coming Soon */}
-            <div className="pricing-card pricing-coming-soon">
-              <div className="pricing-badge">Coming Soon</div>
-              <div className="pricing-tier">Deliver</div>
-              <div className="pricing-price">
-                $39.9<span>/month</span>
-              </div>
-              <div className="pricing-desc">
-                Present to clients. Own the deliverable.
-              </div>
-              <ul className="pricing-features">
-                <li><span className="check"><CheckIcon /></span> Everything in Scope</li>
-                <li><span className="check"><CheckIcon /></span> key.scaf generation</li>
-                <li><span className="check"><CheckIcon /></span> Client-side label restore</li>
-                <li><span className="check"><CheckIcon /></span> Editable PPT export</li>
-                <li><span className="check"><CheckIcon /></span> Export plugins (Kinaxis, CSV)</li>
-              </ul>
-              <button className="btn btn-outline btn-block" disabled>
-                Coming Soon
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* ── Pricing — hidden during friend-testing phase ─── */}
+      {/* TODO: Uncomment when ready to show pricing tiers */}
 
       {/* ── Start Here — Free Local Tool ────────────────── */}
       <section className="landing-section section-alt" id="start-here">
