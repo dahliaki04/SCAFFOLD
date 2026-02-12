@@ -727,6 +727,55 @@
   color: #F59E0B;
 }
 
+/* ── Demo Divider + Compare sub-section ──────────────── */
+
+.demo-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 56px 0 40px;
+}
+
+.demo-divider::before,
+.demo-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.demo-divider span {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+
+.demo-compare {
+  text-align: center;
+}
+
+.demo-compare h3 {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.demo-compare > p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.demo-compare .compare-sample-hint {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+
 /* ── Nav Active Link ─────────────────────────────────── */
 
 .nav-active {
