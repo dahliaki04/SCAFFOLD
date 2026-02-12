@@ -239,6 +239,7 @@ export function Landing() {
             <a href="#how-it-works">How It Works</a>
             <a href="#pricing">Pricing</a>
             <a href="#compare">Compare</a>
+            <a href="#start-here">Get the Local Tool — Free</a>
             <a href="#" onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}>
               Guide
             </a>
@@ -581,9 +582,9 @@ export function Landing() {
                 <li><span className="cross"><CrossIcon /></span> key.scaf generation</li>
                 <li><span className="cross"><CrossIcon /></span> SaaS label restore</li>
               </ul>
-              <button className="btn btn-outline btn-block" onClick={scrollToUpload}>
-                Get Started
-              </button>
+              <a className="btn btn-outline btn-block" href="#start-here">
+                Get the Local Tool — Free
+              </a>
             </div>
 
             {/* Scope — Coming Soon */}
@@ -635,8 +636,56 @@ export function Landing() {
         </div>
       </section>
 
+      {/* ── Start Here — Free Local Tool ────────────────── */}
+      <section className="landing-section section-alt" id="start-here">
+        <div className="landing-section-inner">
+          <div className="section-header">
+            <h2>Start here — get the free Local Tool</h2>
+            <p>
+              Download the portable desktop tool. Validate your BOM, compute
+              risk metrics, and generate reports — fully offline, zero internet
+              required. No account needed.
+            </p>
+          </div>
+          <div className="start-here-grid">
+            <div className="start-here-card">
+              <h3>1. Download</h3>
+              <p>
+                Grab the latest SCAFFOLD release (.zip) and extract it anywhere
+                on your Windows machine. No installer — just unzip and run.
+              </p>
+            </div>
+            <div className="start-here-card">
+              <h3>2. Prepare your data</h3>
+              <p>
+                Open your Excel workbook with three tabs: <strong>Part Master</strong>,{" "}
+                <strong>BOM Structure</strong>, and <strong>Supplier Map</strong>.
+                Column names must match the V4 Schema.
+              </p>
+            </div>
+            <div className="start-here-card">
+              <h3>3. Run</h3>
+              <p>
+                Launch <code>SCAFFOLD.exe</code>, select your file, and click Run.
+                You get <code>validated.xlsx</code> (errors highlighted) and{" "}
+                <code>report.pdf</code> (network summary) instantly.
+              </p>
+            </div>
+          </div>
+          <div style={{ textAlign: "center", marginTop: 24 }}>
+            <button
+              className="btn btn-outline"
+              onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}
+            >
+              Read the full Guide
+              <ArrowRightIcon />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* ── Upload CTA ─────────────────────────────────── */}
-      <section className="landing-section section-alt" id="upload" ref={uploadRef}>
+      <section className="landing-section" id="upload" ref={uploadRef}>
         <div className="landing-section-inner">
           <div className="section-header">
             <h2>Ready to try it?</h2>

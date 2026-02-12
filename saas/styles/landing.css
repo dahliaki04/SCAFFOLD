@@ -739,6 +739,48 @@
   cursor: pointer;
 }
 
+/* ── Start Here — Free Local Tool ─────────────────────── */
+
+.start-here-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.start-here-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.start-here-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.start-here-card p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.start-here-card code {
+  padding: 2px 6px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  font-size: 12px;
+  color: var(--accent);
+}
+
+@media (max-width: 768px) {
+  .start-here-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ── Upload CTA ──────────────────────────────────────── */
 
 .landing-upload {
