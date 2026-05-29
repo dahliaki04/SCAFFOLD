@@ -87,6 +87,16 @@ function UploadIcon() {
   );
 }
 
+function DownloadIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+      <polyline points="7 10 12 15 17 10" />
+      <line x1="12" y1="15" x2="12" y2="3" />
+    </svg>
+  );
+}
+
 function CheckIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -733,9 +743,18 @@ export function Landing() {
               </p>
             </div>
           </div>
-          <div style={{ textAlign: "center", marginTop: 24 }}>
+          <div style={{ textAlign: "center", marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            <a
+              className="btn btn-accent btn-lg"
+              href="https://github.com/dahliaki04/SCAFFOLD/releases/latest"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <DownloadIcon />
+              Download SCAFFOLD
+            </a>
             <button
-              className="btn btn-outline"
+              className="btn btn-outline btn-lg"
               onClick={(e) => { e.preventDefault(); dispatch({ type: "SET_PAGE", payload: "guide" }); }}
             >
               Read the full Guide
