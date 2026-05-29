@@ -746,12 +746,12 @@ export function Landing() {
           <div style={{ textAlign: "center", marginTop: 24, display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
             <a
               className="btn btn-accent btn-lg"
-              href="https://github.com/dahliaki04/SCAFFOLD/releases/latest"
-              target="_blank"
+              href="https://github.com/dahliaki04/SCAFFOLD/releases/latest/download/SCAFFOLD-v0.1.0-win-x64.zip"
+              download
               rel="noopener noreferrer"
             >
               <DownloadIcon />
-              Download SCAFFOLD
+              Download SCAFFOLD (.zip, 54 MB)
             </a>
             <button
               className="btn btn-outline btn-lg"
