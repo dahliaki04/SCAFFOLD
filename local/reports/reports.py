@@ -148,11 +148,13 @@ def generate_network_summary(
     num_edges = G.number_of_edges()
     sites = sorted(part_master_df["Site"].unique())
 
-    # Depth per end product
+    # Depth per end product. compute_paths returns [] for orphan end
+    # products (declared in Part Master but absent from BOM-built graph) —
+    # set their depth to 0 so max() doesn't blow up.
     depths: dict[str, int] = {}
     for ep in end_products:
         paths = compute_paths(ep, G)
-        max_depth = max(len(p) for p in paths)
+        max_depth = max((len(p) for p in paths), default=0)
         ep_label = f"{ep[0]}@{ep[1]}"
         depths[ep_label] = max_depth
 

@@ -177,7 +177,15 @@ def main() -> None:
     errors.extend(validate_bom(bom_df))
     errors.extend(validate_supplier_map(sup_df))
     errors.extend(validate_usage_share(bom_df))
-    errors.extend(validate_end_products_have_bom(pm_df, bom_df))
+
+    # L1-39 follow-up: orphan end products (declared in Part Master but with
+    # no BOM entry as parent) are a *warning*, not a blocking error. Demand
+    # sites separated from production sites (e.g. demand at 9999, production
+    # at 1522 with no explicit transfer edge) is a valid real-world pattern.
+    # compute_paths() guards against the underlying crash; we surface the
+    # situation here so the user knows which end products won't appear in
+    # path stats.
+    warnings_ep = validate_end_products_have_bom(pm_df, bom_df)
 
     if errors:
         print(f"      FAILED — {len(errors)} validation errors:")
@@ -185,6 +193,14 @@ def main() -> None:
             print(f"        - {e}")
         sys.exit(1)
     print("      PASSED — all checks OK")
+
+    for w in warnings_ep:
+        print(f"      WARNING: {w}")
+    if warnings_ep:
+        print(
+            "      (Orphan end products are skipped in path computation; "
+            "the pipeline continues with partial results.)"
+        )
 
     if args.validate_only:
         print("\n      --validate-only: stopping here.")
