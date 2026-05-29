@@ -18,23 +18,29 @@ Output: dist/scaffold/ (portable folder, no installation required)
 import sys
 from pathlib import Path
 
+from PyInstaller.utils.hooks import collect_all
+
 block_cipher = None
+
+# Collect all ttkbootstrap resources (themes.json, etc.) up-front so they go
+# through Analysis normalization (PyInstaller 6.x rejects post-hoc 2-tuples).
+ttkbootstrap_datas, ttkbootstrap_binaries, ttkbootstrap_hiddenimports = collect_all('ttkbootstrap')
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
-    datas=[],
+    binaries=ttkbootstrap_binaries,
+    datas=ttkbootstrap_datas,
     hiddenimports=[
         'orjson',
         'ttkbootstrap',
         'cryptography',
         'reportlab',
         # Windows-only: COM automation for xlwings
-        'pywin32',
         'pythoncom',
         'win32com',
-    ],
+        'win32com.client',
+    ] + ttkbootstrap_hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -52,13 +58,6 @@ a = Analysis(
     noarchive=False,
 )
 
-# Collect all ttkbootstrap resources (themes.json, etc.)
-from PyInstaller.utils.hooks import collect_all
-ttkbootstrap_datas, ttkbootstrap_binaries, ttkbootstrap_hiddenimports = collect_all('ttkbootstrap')
-a.datas += ttkbootstrap_datas
-a.binaries += ttkbootstrap_binaries
-a.hiddenimports += ttkbootstrap_hiddenimports
-
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
@@ -70,7 +69,7 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # UPX-packed binaries trigger AV false positives; safer to ship uncompressed
     console=False,  # Windowed mode (no console)
     disable_windowed_traceback=False,
     argv_emulation=False,
@@ -85,7 +84,7 @@ coll = COLLECT(
     a.zipfiles,
     a.datas,
     strip=False,
-    upx=True,
+    upx=False,  # UPX-packed binaries trigger AV false positives; safer to ship uncompressed
     upx_exclude=[],
     name='scaffold',
 )
