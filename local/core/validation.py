@@ -128,3 +128,62 @@ def validate_usage_share(df: pd.DataFrame) -> list[str]:
             )
 
     return errors
+
+
+# ---------------------------------------------------------------------------
+# Cross-tab integrity: end products must appear in BOM as parents
+# ---------------------------------------------------------------------------
+
+def validate_end_products_have_bom(
+    pm_df: pd.DataFrame,
+    bom_df: pd.DataFrame,
+) -> list[str]:
+    """Every IsEndProduct=True row must appear as an ``AssemblyName`` in BOM.
+
+    Without this check, an end product declared in Part Master but with
+    no BOM entry as parent slips through validation, ends up in the
+    ``end_products`` set, and then crashes ``compute_paths`` /
+    ``group_by_pattern`` with::
+
+        NetworkXError: The node ('SQJ142EP-T1_JE3-J', 9999.0) is not
+        in the digraph
+
+    This validator turns that opaque failure into a clear, actionable
+    user-facing message at the validation gate, naming the orphan end
+    products so the consultant knows exactly which rows to fix.
+    """
+    errors: list[str] = []
+
+    if "IsEndProduct" not in pm_df.columns:
+        return errors
+    if "AssemblyName" not in bom_df.columns or "AssemblySite" not in bom_df.columns:
+        return errors
+
+    # Coerce IsEndProduct to bool defensively (handles "TRUE"/"FALSE" strings)
+    is_ep = pm_df["IsEndProduct"].apply(
+        lambda v: v if isinstance(v, bool) else str(v).strip().upper() == "TRUE"
+    )
+    end_products = pm_df[is_ep]
+    if end_products.empty:
+        return errors
+
+    # Set of (parent_name, parent_site) tuples that appear as assemblies in BOM
+    parents = set(zip(bom_df["AssemblyName"], bom_df["AssemblySite"]))
+
+    orphans: list[str] = []
+    for _, row in end_products.iterrows():
+        pn, site = row.get("PartNumber"), row.get("Site")
+        if pd.isna(pn) or pd.isna(site):
+            continue  # already flagged by validate_part_master
+        if (pn, site) not in parents:
+            orphans.append(f"{pn}@{site}")
+
+    if orphans:
+        sample = ", ".join(orphans[:5])
+        more = f" (and {len(orphans) - 5} more)" if len(orphans) > 5 else ""
+        errors.append(
+            f"Part Master: {len(orphans)} end product(s) declared with no BOM entry "
+            f"as parent — would crash path computation: {sample}{more}"
+        )
+
+    return errors
