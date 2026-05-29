@@ -369,13 +369,27 @@ class ScaffoldApp:
             errors.extend(validate_bom(bom_df))
             errors.extend(validate_supplier_map(sup_df))
             errors.extend(validate_usage_share(bom_df))
-            errors.extend(validate_end_products_have_bom(pm_df, bom_df))
+
+            # L1-39 follow-up: orphan end products → warning, not blocker.
+            # Demand sites separated from production sites (e.g. demand
+            # at 9999, production at 1522) is a valid real-world pattern.
+            # compute_paths() guards against the underlying crash.
+            warnings_ep = validate_end_products_have_bom(pm_df, bom_df)
+
             if errors:
                 for e in errors:
                     self._log(f"  ERROR: {e}")
                 self._log("Pipeline stopped due to validation errors.")
                 return
             self._log("      PASSED")
+
+            for w in warnings_ep:
+                self._log(f"  WARNING: {w}")
+            if warnings_ep:
+                self._log(
+                    "  (Orphan end products are skipped in path "
+                    "computation; pipeline continues with partial results.)"
+                )
 
             # Build graph
             self._log("[3/6] Building BOM graph...")

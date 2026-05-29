@@ -46,6 +46,12 @@ def _compute_node_depths(
 
     depths: dict[tuple[str, str], int] = {}
     for ep in end_products:
+        # Orphan end products (declared in Part Master but absent from BOM-
+        # built graph) are surfaced as warnings by validate_end_products_have_bom
+        # and skipped here. Without this guard, nx.single_source_shortest_path_length
+        # raises NodeNotFound and aborts the pipeline.
+        if ep not in G:
+            continue
         lengths = nx.single_source_shortest_path_length(G, ep)
         for node, d in lengths.items():
             depths[node] = max(depths.get(node, 0), d)

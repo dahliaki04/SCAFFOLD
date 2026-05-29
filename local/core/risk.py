@@ -67,7 +67,19 @@ def compute_paths(
     start node to a leaf (out-degree 0).
 
     Uses an explicit stack — **no recursion**.
+
+    Returns ``[]`` if ``start`` is not in the graph. This is the case
+    when an end product is declared in Part Master at a "demand" site
+    that doesn't appear as an Assembly in BOM Structure — a real
+    real-world pattern where the demand site is a logical/sentinel
+    site distinct from the production site (e.g. demand at site 9999,
+    production at site 1522). Returning empty rather than raising
+    ``NetworkXError`` lets the pipeline finish and produce partial
+    results.
     """
+    if start not in G:
+        return []
+
     paths: list[list[tuple[str, str]]] = []
     # Stack entries: (current_node, path_so_far)
     stack: list[tuple[tuple[str, str], list[tuple[str, str]]]] = [
