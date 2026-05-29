@@ -9,3 +9,7 @@ node_modules/
 .venv*/
 .scratch/
 output/
+
+# Demo input workbooks — synthesize from CSVs locally, do not commit
+demo/*.xlsx
+demo/*.xls
