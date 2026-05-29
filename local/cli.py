@@ -55,6 +55,10 @@ def _read_inputs(args: argparse.Namespace):
     pm_df["IsEndProduct"] = pm_df["IsEndProduct"].apply(
         lambda v: v if isinstance(v, bool) else str(v).upper() == "TRUE"
     )
+    # Coerce identity columns (PartName/Site/etc.) to string so node tuples
+    # match across tabs regardless of how each cell was typed in Excel.
+    from local.core.reader import normalize_input_dtypes
+    pm_df, bom_df, sup_df = normalize_input_dtypes(pm_df, bom_df, sup_df)
     return pm_df, bom_df, sup_df
 
 
@@ -128,6 +132,7 @@ def main() -> None:
     from local.core.graph import build_digraph, detect_cycles, detect_orphans
     from local.core.validation import (
         validate_bom,
+        validate_end_products_have_bom,
         validate_part_master,
         validate_supplier_map,
         validate_usage_share,
@@ -172,6 +177,7 @@ def main() -> None:
     errors.extend(validate_bom(bom_df))
     errors.extend(validate_supplier_map(sup_df))
     errors.extend(validate_usage_share(bom_df))
+    errors.extend(validate_end_products_have_bom(pm_df, bom_df))
 
     if errors:
         print(f"      FAILED — {len(errors)} validation errors:")
