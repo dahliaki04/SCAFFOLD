@@ -129,9 +129,11 @@ def main() -> None:
     from local.core.validation import (
         validate_bom,
         validate_part_master,
+        validate_priority,
         validate_supplier_map,
         validate_usage_share,
     )
+    from local.core.subgroup import derive_subgroups_from_priority
     from local.core.output import (
         generate_key_data,
         generate_key_scaf,
@@ -171,6 +173,7 @@ def main() -> None:
     errors.extend(validate_part_master(pm_df))
     errors.extend(validate_bom(bom_df))
     errors.extend(validate_supplier_map(sup_df))
+    errors.extend(validate_priority(bom_df))
     errors.extend(validate_usage_share(bom_df))
 
     if errors:
@@ -183,6 +186,19 @@ def main() -> None:
     if args.validate_only:
         print("\n      --validate-only: stopping here.")
         sys.exit(0)
+
+    # ── Step 2.5: Derive SubGroups from Priority (L1-39) ──
+    bom_df, subgroup_proposals = derive_subgroups_from_priority(bom_df)
+    if subgroup_proposals:
+        print(
+            f"      L1-39: auto-derived {len(subgroup_proposals)} SubGroup(s) "
+            f"from Priority column"
+        )
+        for p in subgroup_proposals:
+            members = ", ".join(
+                f"{c}@{s} (P{pr})" for c, s, pr, _ in p.members
+            )
+            print(f"        {p.subgroup_name}: {members}")
 
     # ── Step 3: Build graph ──────────────────────────────
     print("[3/6] Building BOM graph...")
@@ -210,7 +226,7 @@ def main() -> None:
 
     # ── Step 4: Generate network summary ─────────────────
     print("[4/6] Computing risk metrics & network summary...")
-    summary = generate_network_summary(G, pm_df, end_products, sup_df)
+    summary = generate_network_summary(G, pm_df, end_products, sup_df, bom_df)
     summary_path = out_dir / timestamped_filename("summary", "txt")
     lines = [f"{k}: {v}" for k, v in summary.items()]
     summary_path.write_text("\n".join(lines))
@@ -238,7 +254,7 @@ def main() -> None:
         print("[5/6] Skipping upload.json (Free tier)")
     else:
         print("[5/6] Generating upload.json (masked)...")
-        upload_data = generate_upload_json(G, pm_df, sup_df, end_products)
+        upload_data = generate_upload_json(G, pm_df, sup_df, end_products, bom_df)
         # Embed tier signature if licensed
         if args.license_key and tier != TIER_FREE:
             from local.core.licensing import extract_tier_sig

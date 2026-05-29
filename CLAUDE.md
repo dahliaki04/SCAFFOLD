@@ -146,6 +146,20 @@ pyinstaller --noconfirm --onedir --windowed \
   main.py
 ```
 
+### Sprint 5 — Post-MVP Additions
+
+| ID | Feature | Priority | Description |
+|----|---------|----------|-------------|
+| L1-39 | Auto-SubGroup from Priority | P1 | Optional `Priority` column on BOM Structure; when 2+ children of one parent carry a Priority value, the tool auto-derives a `SubGroup` (`AUTO-SG-{parent}-{site}`) and `UsageShare` (P1=1.0, P2+=0.0, sums to 1.0). Single-source detection (L1-13) is extended to skip parts that have an alternate in any SubGroup (manual or auto). |
+
+**L1-39 details**:
+- New module: `local/core/subgroup.py` — `derive_subgroups_from_priority()` and `parts_with_alternates()`
+- New validation: `local/core/validation.py:validate_priority()` — positive integers, unique per parent
+- Pipeline order: `validate_*` → `derive_subgroups_from_priority` → `build_digraph` → summary/output
+- Risk integration: `detect_single_source(supplier_map_df, bom_df)` filters out parts in multi-member SubGroups
+- Manual `SubGroup` always wins — never overwritten by auto-derivation
+- Tests: `tests/local/test_subgroup.py` (18 cases)
+
 ### Phase 2+ (Deferred — 12 P2)
 
 | ID | Feature | Description |

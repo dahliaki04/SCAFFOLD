@@ -53,7 +53,9 @@ def read_bom(path: Path, **kw) -> pd.DataFrame:
 
     Returns a cleaned :class:`~pandas.DataFrame` with columns
     ``AssemblyName``, ``AssemblySite``, ``ComponentName``,
-    ``ComponentSite``, ``Qty``, and optional ``SubGroup`` / ``UsageShare``.
+    ``ComponentSite``, ``Qty``, and optional ``SubGroup`` / ``UsageShare``
+    / ``Priority`` (L1-39 — when 2+ children of one parent carry a
+    Priority value, the tool auto-derives a SubGroup for them).
     """
     import xlwings as xw
 

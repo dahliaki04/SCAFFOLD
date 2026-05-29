@@ -43,7 +43,10 @@ def export_generic_csv(
     )
 
     max_lt = compute_max_leadtime(supplier_map_df)
-    single_src = detect_single_source(supplier_map_df)
+    # L1-39: bom_df enables the SubGroup-aware filter — parts with an
+    # alternate component are no longer flagged as single-source even
+    # when their supplier is unique.
+    single_src = detect_single_source(supplier_map_df, bom_df)
 
     # Build lookups
     stage_lookup: dict[tuple[str, str], str] = {}

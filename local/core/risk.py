@@ -129,16 +129,36 @@ def group_by_pattern(
 
 
 # ---------------------------------------------------------------------------
-# L1-13: Single Source Detection
+# L1-13: Single Source Detection (SubGroup-aware as of L1-39)
 # ---------------------------------------------------------------------------
 
-def detect_single_source(supplier_map_df: pd.DataFrame) -> set[str]:
-    """Flag parts that have only one supplier (single source risk).
+def detect_single_source(
+    supplier_map_df: pd.DataFrame,
+    bom_df: pd.DataFrame | None = None,
+) -> set[str]:
+    """Flag parts that have no sourcing fallback.
 
-    Returns a set of part names with exactly one supplier.
+    A part is a single-source risk only if **both**:
+
+    * It has exactly one supplier in the Supplier Map, AND
+    * It has no alternate part in a SubGroup (manual or auto-derived
+      from a Priority column — L1-39).
+
+    Parts with multiple suppliers, or parts that participate in a
+    multi-member SubGroup, are excluded. Pass ``bom_df`` to enable
+    the SubGroup check; omit it for the legacy supplier-only behavior.
     """
     counts = supplier_map_df.groupby("Part")["Supplier"].nunique()
-    return set(counts[counts == 1].index)
+    supplier_singletons = set(counts[counts == 1].index)
+
+    if bom_df is None:
+        return supplier_singletons
+
+    # Defer import to avoid a circular reference if subgroup ever needs risk.
+    from local.core.subgroup import parts_with_alternates
+
+    has_alt = parts_with_alternates(bom_df)
+    return supplier_singletons - has_alt
 
 
 # ---------------------------------------------------------------------------

@@ -60,6 +60,7 @@ def generate_upload_json(
     part_master_df: "pd.DataFrame",
     supplier_map_df: "pd.DataFrame",
     end_products: set[tuple[str, str]],
+    bom_df: "pd.DataFrame | None" = None,
 ) -> dict:
     """Build the full upload.json data structure (L1-19).
 
@@ -128,8 +129,8 @@ def generate_upload_json(
             path_hashes.append([_node_hash(p, s) for p, s in path])
         paths_out[ep_hash] = path_hashes
 
-    # --- Single source detection (L1-13) ---
-    single_src = detect_single_source(supplier_map_df)
+    # --- Single source detection (L1-13, SubGroup-aware via L1-39) ---
+    single_src = detect_single_source(supplier_map_df, bom_df)
 
     # --- Risk ---
     risk: dict[str, dict] = {}

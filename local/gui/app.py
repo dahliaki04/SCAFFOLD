@@ -300,9 +300,11 @@ class ScaffoldApp:
             from local.core.validation import (
                 validate_bom,
                 validate_part_master,
+                validate_priority,
                 validate_supplier_map,
                 validate_usage_share,
             )
+            from local.core.subgroup import derive_subgroups_from_priority
             from local.core.output import (
                 generate_key_data,
                 generate_key_scaf,
@@ -364,6 +366,7 @@ class ScaffoldApp:
             errors.extend(validate_part_master(pm_df))
             errors.extend(validate_bom(bom_df))
             errors.extend(validate_supplier_map(sup_df))
+            errors.extend(validate_priority(bom_df))
             errors.extend(validate_usage_share(bom_df))
             if errors:
                 for e in errors:
@@ -371,6 +374,15 @@ class ScaffoldApp:
                 self._log("Pipeline stopped due to validation errors.")
                 return
             self._log("      PASSED")
+
+            # L1-39: auto-derive SubGroups from Priority column
+            bom_df, subgroup_proposals = derive_subgroups_from_priority(bom_df)
+            if subgroup_proposals:
+                self._log(
+                    f"      L1-39: auto-derived {len(subgroup_proposals)} SubGroup(s)"
+                )
+                for p in subgroup_proposals:
+                    self._log(f"        {p.subgroup_name}: {len(p.members)} alternates")
 
             # Build graph
             self._log("[3/6] Building BOM graph...")
@@ -391,7 +403,7 @@ class ScaffoldApp:
 
             # Summary + reports
             self._log("[4/6] Computing risk metrics & reports...")
-            summary = generate_network_summary(G, pm_df, end_products, sup_df)
+            summary = generate_network_summary(G, pm_df, end_products, sup_df, bom_df)
 
             # Validated Excel
             validation_results = validate_and_annotate(pm_df, bom_df, sup_df)
@@ -415,7 +427,7 @@ class ScaffoldApp:
             # upload.json
             if tier != TIER_FREE:
                 self._log("[5/6] Generating upload.json...")
-                upload_data = generate_upload_json(G, pm_df, sup_df, end_products)
+                upload_data = generate_upload_json(G, pm_df, sup_df, end_products, bom_df)
                 if license_key and tier != TIER_FREE:
                     from local.core.licensing import extract_tier_sig
                     tier_sig = extract_tier_sig(license_key)

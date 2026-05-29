@@ -129,6 +129,7 @@ def generate_network_summary(
     part_master_df: pd.DataFrame,
     end_products: set[tuple[str, str]],
     supplier_map_df: pd.DataFrame,
+    bom_df: pd.DataFrame | None = None,
 ) -> dict:
     """Generate network summary statistics.
 
@@ -169,8 +170,9 @@ def generate_network_summary(
         if p[0] == c[0] and p[1] != c[1]
     ]
 
-    # Single source
-    single_source = detect_single_source(supplier_map_df)
+    # Single source — L1-39: pass bom_df so SubGroup membership filters out
+    # parts that already have an alternate component (auto or manual).
+    single_source = detect_single_source(supplier_map_df, bom_df)
 
     # Max lead times
     max_lt = compute_max_leadtime(supplier_map_df)
